@@ -2,11 +2,11 @@ import sqlite3
 import pandas as pd
 import Functions2 as f
 
-conn = sqlite3.connect('DB_NBA_v2.8.db')  # Connection / Creation of the DataBase
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')  # Connection / Creation of the DataBase
 c = conn.cursor()
 conn.commit()
 
-'''i = 0
+i = 0
 list_players = f.sql_column_to_list('player')
 full_join = 'SELECT * FROM PlayersBios P0'
 for x in list_players:
@@ -79,7 +79,7 @@ for x in list_teams:
         print(str(i) + ' / ' + str(len(list_teams)))
 full_query = pd.read_sql_query(full_join, conn)
 df = pd.DataFrame(full_query)
-df.to_sql('Dataset_Teams', conn, if_exists='append', index=False)'''
+df.to_sql('Dataset_Teams', conn, if_exists='append', index=False)
 
 i = 0
 list_teams = f.sql_column_to_list('Lineup')

@@ -3,7 +3,7 @@ import sqlite3
 import time
 import pandas as pd
 
-conn = sqlite3.connect('DB_NBA_v2.8.db')  # Connection / Creation of the DataBase
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')  # Connection / Creation of the DataBase
 c = conn.cursor()
 conn.commit()
 
@@ -28,7 +28,7 @@ def create_index(PlayerOrTeam, Type, TableName):
 
 
 def sql_column_to_list(type):
-    conn = sqlite3.connect('DB_NBA_v2.8.db')
+    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')
     conn.row_factory = lambda cursor, row: row[0]
     c = conn.cursor()
     list = c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + type + '%"').fetchall()
@@ -1819,7 +1819,7 @@ def clean_dataset(dataset):
         query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Teams', conn)
         df = pd.DataFrame(query_Teams)
         df_columns_Teams = df.columns.to_list()
-        column_not_to_drop = df_columns_Teams[0:26]
+        column_not_to_drop = df_columns_Teams[0:26]+df_columns_Teams[56:58]
         to_add = []
         for j in column_not_to_drop:
             to_add.append(j)
@@ -1845,7 +1845,7 @@ def clean_dataset(dataset):
         query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Lineups', conn)
         df = pd.DataFrame(query_Teams)
         df_columns_Teams = df.columns.to_list()
-        column_not_to_drop = [df_columns_Teams[57]]+df_columns_Teams[1:30]
+        column_not_to_drop = df_columns_Teams[1:30]+df_columns_Teams[57:59]
         to_add = []
         for j in column_not_to_drop:
             to_add.append(j)
