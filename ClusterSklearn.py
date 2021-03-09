@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sqlite3
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -7,10 +8,13 @@ import plotly.express as px
 import plotly
 
 
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creation of the DataBase
+c = conn.cursor()
+conn.commit()
+
 def get_numeric_data(filename):
     df = pd.read_csv('../DB 100h Proj/' + filename + '.csv', sep=';')  # read csv file
-    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df[
-                                                                          'PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
+    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
     columns = df.columns.to_list()
     df.drop(columns=columns[:columns.index('PlayersBios_GP')], inplace=True)
     return df
@@ -18,8 +22,7 @@ def get_numeric_data(filename):
 
 def get_non_numeric_data(filename):
     df = pd.read_csv('../DB 100h Proj/' + filename + '.csv', sep=';')  # read csv file
-    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df[
-                                                                          'PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
+    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
     columns = df.columns.to_list()
     df.drop(columns=columns[columns.index('PlayersBios_GP'):], inplace=True)
     df.reset_index(inplace=True)
