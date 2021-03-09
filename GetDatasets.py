@@ -2,11 +2,11 @@ import pandas as pd
 import sqlite3
 
 
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')  # Connect to the 1st database
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connect to the 1st database
 c = conn.cursor()
 conn.commit()
 
-conn2 = sqlite3.connect('../DB 100h Proj/DB_NBA_v3.db')  # Creation of new database that will have only the 3 datasets
+conn2 = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Creation of new database that will have only the 3 datasets
 c2 = conn2.cursor()  # the db will be "lighter"
 conn2.commit()
 

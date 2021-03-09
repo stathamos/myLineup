@@ -3,7 +3,7 @@ import sqlite3
 import time
 import pandas as pd
 
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')  # Connection / Creation of the DataBase
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creation of the DataBase
 c = conn.cursor()
 conn.commit()
 
