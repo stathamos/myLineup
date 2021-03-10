@@ -180,8 +180,11 @@ df_teams = pd.DataFrame(query_teams)  # convert the query into a dataframe
 df_lineups = pd.DataFrame(query_lineups)  # convert the query into a dataframe
 
 df_players.to_sql('Dataset_Players', conn2, if_exists='replace', index=False)  # insert dataframe into new db
+print('Dataset Players cleaned')
 df_teams.to_sql('Dataset_Teams', conn2, if_exists='replace', index=False)
+print('Dataset Teams cleaned')
 df_lineups.to_sql('Dataset_Lineups', conn2, if_exists='replace', index=False)
+print('Dataset Lineups cleaned')
 
 c2.execute('CREATE INDEX "Index_Dataset_Players" ON "Dataset_Players" ("PlayersBios_PLAYER_ID"	ASC, '
            '"PlayersBios_Season" ASC, "PlayersBios_SeasonType"	ASC);')

@@ -1804,6 +1804,7 @@ def clean_dataset(dataset):
         main_list = list(set(df.columns.to_list()) - set(df_columns_players))
         df.drop(main_list, axis=1, inplace=True)
         df.to_sql('Dataset_Players_2', conn, if_exists='replace', index=False)
+        print('Dataset Players cleaned')
 
     elif dataset == 'Teams':
 
@@ -1830,6 +1831,7 @@ def clean_dataset(dataset):
         main_list = list(set(df.columns.to_list()) - set(df_columns_Teams))
         df.drop(main_list, axis=1, inplace=True)
         df.to_sql('Dataset_Teams_2', conn, if_exists='replace', index=False)
+        print('Dataset Teams cleaned')
 
     elif dataset == 'Lineups':
 
@@ -1862,3 +1864,4 @@ def clean_dataset(dataset):
         lst = [w.replace('-', ', ') for w in lst]
         df['LineupsTraditionalStats_GROUP_ID'] = lst
         df.to_sql('Dataset_Lineups_2', conn, if_exists='replace', index=False)
+        print('Dataset Lineups cleaned')
