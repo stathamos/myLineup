@@ -9,13 +9,13 @@ import plotly
 import hdbscan
 
 
-
 def plot_clusters(data, algorithm, args, kwds):
     labels = algorithm(*args, **kwds).fit_predict(data)
     palette = sns.color_palette('deep', np.unique(labels).max() + 1)
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
     fig2 = px.scatter(data, x=0, y=1, color=colors)
     return fig2
+
 
 def get_numeric_data(filename):
       df=pd.read_csv('../DB 100h Proj/'+filename+'.csv', sep=';') #read csv file

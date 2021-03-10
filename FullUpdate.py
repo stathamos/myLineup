@@ -1,6 +1,7 @@
 import Functions2 as f
 import sqlite3
 import pandas as pd
+import GetNumericData as g
 
 
 """f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
@@ -31,11 +32,11 @@ f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'DribbleRan
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'TouchTimeRange')  # 9 OK
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'CloseDefDistRange')  # 10 OK
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamshotlocations', '')  # 11 OK
-f.get_teams_data('https://stats.nba.com/stats/leaguehustlestatsteam', '')  # 12 OK"""
+f.get_teams_data('https://stats.nba.com/stats/leaguehustlestatsteam', '')  # 12 OK
 
 conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creation of the DataBase
 c = conn.cursor()
-"""update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
+update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
                    'Players2ptsDefense_CLOSE_DEF_PLAYER_ID;',
                    'ALTER TABLE Players3ptsDefense RENAME COLUMN '
                    'Players3ptsDefense_CLOSE_DEF_PERSON_ID to '
@@ -49,7 +50,7 @@ c = conn.cursor()
                    'ALTER TABLE PlayersPaintDefense RENAME COLUMN PlayersPaintDefense_CLOSE_DEF_PERSON_ID to '
                    'PlayersPaintDefense_CLOSE_DEF_PLAYER_ID; ']
 for i in update_col_name:
-    c.execute(i)"""
+    c.execute(i)
 conn.commit()
 
 i = 0
@@ -176,8 +177,16 @@ query_teams = pd.read_sql_query('SELECT * FROM Dataset_Teams_2', conn)  # Get te
 query_lineups = pd.read_sql_query('SELECT * FROM Dataset_Lineups_2', conn)  # Get lineups stats
 
 df_players = pd.DataFrame(query_players)  # convert the query into a dataframe
+df_players = df_players[['PlayersBios_Season', 'PlayersBios_SeasonType'] +
+                        [c for c in df_players if c not in ['PlayersBios_Season', 'PlayersBios_SeasonType']]]
 df_teams = pd.DataFrame(query_teams)  # convert the query into a dataframe
+df_teams = df_teams[['TeamsTraditionalStats_Season', 'TeamsTraditionalStats_SeasonType'] +
+                    [c for c in df_teams if c not in ['TeamsTraditionalStats_Season',
+                                                      'TeamsTraditionalStats_SeasonType']]]
 df_lineups = pd.DataFrame(query_lineups)  # convert the query into a dataframe
+df_lineups = df_lineups[['LineupsTraditionalStats_Season', 'LineupsTraditionalStats_SeasonType'] +
+                        [c for c in df_lineups if c not in ['LineupsTraditionalStats_Season',
+                                                            'LineupsTraditionalStats_SeasonType']]]
 
 df_players.to_sql('Dataset_Players', conn2, if_exists='replace', index=False)  # insert dataframe into new db
 print('Dataset Players cleaned')
@@ -191,4 +200,20 @@ c2.execute('CREATE INDEX "Index_Dataset_Players" ON "Dataset_Players" ("PlayersB
 c2.execute('CREATE INDEX "Index_Dataset_Teams" ON "Dataset_Teams" ("TeamsTraditionalStats_TEAM_ID"	ASC, '
            '"TeamsTraditionalStats_Season" ASC, "TeamsTraditionalStats_SeasonType"	ASC);')
 c2.execute('CREATE INDEX "Index_Dataset_Lineups" ON "Dataset_Lineups" ("LineupsTraditionalStats_PLAYER_ID"	ASC, '
-           '"LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')
+           '"LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')"""
+
+"""g.get_numeric_data('Dataset_Players')
+g.get_numeric_data('Dataset_Teams')
+g.get_numeric_data('Dataset_Lineups')"""
+
+"""g.get_non_numeric_data('Dataset_Players')
+g.get_non_numeric_data('Dataset_Teams')
+g.get_non_numeric_data('Dataset_Lineups')"""
+
+"""g.clean_numeric_dataset('Dataset_Players', 0.8)
+g.clean_numeric_dataset('Dataset_Teams', 0.8)
+g.clean_numeric_dataset('Dataset_Lineups', 0.8)"""
+
+g.get_pca('Dataset_Players', 5)
+g.get_pca('Dataset_Teams', 5)
+g.get_pca('Dataset_Lineups', 5)
