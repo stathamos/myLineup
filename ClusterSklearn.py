@@ -12,6 +12,7 @@ conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creatio
 c = conn.cursor()
 conn.commit()
 
+
 def get_numeric_data(filename):
     df = pd.read_csv('../DB 100h Proj/' + filename + '.csv', sep=';')  # read csv file
     df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
@@ -202,12 +203,12 @@ PCA_components_with_centroids = get_pca_components_with_centroids()
 
 PCA_components_with_distances = get_pca_components_with_distances()
 
-# plotly.offline.plot(plot_histo('exp_var', df_numeric, 30), filename='../Graphs/exp_var.html')
+plotly.offline.plot(plot_histo('exp_var', df_numeric, 30), filename='../Graphs/exp_var.html')
 
-# plotly.offline.plot(plot_histo('nb_clus', df_numeric, 30), filename='../Graphs/nb_clus.html')
+plotly.offline.plot(plot_histo('nb_clus', df_numeric, 30), filename='../Graphs/nb_clus.html')
 
-# plotly.offline.plot(scatter_3d(7, 0.5, 1, 1), filename='../Graphs/3d_pca_players.html')
+plotly.offline.plot(scatter_3d(7, 0.5, 1, 1), filename='../Graphs/3d_pca_players.html')
 
 PCA_components_with_avg_distances = get_dist_from_centroid()
 
-# plotly.offline.plot(plot_dist_from_centroid(), filename='../Graphs/dist_from_centroid.html')
+plotly.offline.plot(plot_dist_from_centroid(), filename='../Graphs/dist_from_centroid.html')

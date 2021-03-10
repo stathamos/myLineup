@@ -28,7 +28,7 @@ def create_index(PlayerOrTeam, Type, TableName):
 
 
 def sql_column_to_list(type):
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v2.8.db')
+    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')
     conn.row_factory = lambda cursor, row: row[0]
     c = conn.cursor()
     list = c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + type + '%"').fetchall()

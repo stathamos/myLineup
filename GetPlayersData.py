@@ -1,9 +1,10 @@
 import Functions2 as f
 
+
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerstats', '')  # OK 2
 f.get_players_data('https://stats.nba.com/stats/leagueplayerondetails', '')  # OK 3
-f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
+# f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerclutch', '')  # OK 5
 f.get_players_data('https://stats.nba.com/stats/synergyplaytypes', '')  # OK 6
 f.get_players_data('https://stats.nba.com/stats/leaguedashptstats', '')  # OK 7
