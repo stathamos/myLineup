@@ -202,7 +202,7 @@ c2.execute('CREATE INDEX "Index_Dataset_Teams" ON "Dataset_Teams" ("TeamsTraditi
 c2.execute('CREATE INDEX "Index_Dataset_Lineups" ON "Dataset_Lineups" ("LineupsTraditionalStats_PLAYER_ID"	ASC, '
            '"LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')"""
 
-g.get_numeric_data('Dataset_Players')
+"""g.get_numeric_data('Dataset_Players')
 g.get_numeric_data('Dataset_Teams')
 g.get_numeric_data('Dataset_Lineups')
 
@@ -212,12 +212,14 @@ g.get_non_numeric_data('Dataset_Lineups')
 
 g.clean_numeric_dataset('Dataset_Players', 0.8)
 g.clean_numeric_dataset('Dataset_Teams', 0.8)
-g.clean_numeric_dataset('Dataset_Lineups', 0.8)
+g.clean_numeric_dataset('Dataset_Lineups', 0.8)"""
 
-g.get_pca('Dataset_Players', 30)
+"""g.get_pca('Dataset_Players', 30)
 g.get_pca('Dataset_Teams', 10)
-g.get_pca('Dataset_Lineups', 15)
+g.get_pca('Dataset_Lineups', 15)"""
 
-g.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7, 'test_p3d')
+"""g.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7, 'test_p3d')
 g.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7, 'test_t3d')
-g.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7, 'test_l3d')
+g.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7, 'test_l3d')"""
+
+g.get_bests_lineups()
