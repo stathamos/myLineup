@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import plotly
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
@@ -91,177 +92,117 @@ def clean_numeric_dataset(filename, missing_rate):
 def get_pca(filename, nb_of_components):
     if filename == 'Dataset_Players':
         query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        name = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME || " " || PlayersBios_Season FROM NonNumeric_'
+                                 + filename, conn)
         df = pd.DataFrame(query)
+        get_name = pd.DataFrame(name)
+        col_name = 'PlayerName'
+        ncluster = 7
     elif filename == 'Dataset_Teams':
         query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        name = pd.read_sql_query('SELECT TeamsTraditionalStats_TEAM_NAME || " " || TeamsTraditionalStats_Season '
+                                 'FROM NonNumeric_' + filename, conn)
         df = pd.DataFrame(query)
-    else:
+        get_name = pd.DataFrame(name)
+        col_name = 'TeamName'
+        ncluster = 4
+    elif filename == 'Dataset_Lineups':
         query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        name = pd.read_sql_query('SELECT LineupsTraditionalStats_GROUP_NAME || " " || '
+                                 'LineupsTraditionalStats_Season FROM NonNumeric_' + filename, conn)
         df = pd.DataFrame(query)
+        get_name = pd.DataFrame(name)
+        col_name = 'LineupName'
+        ncluster = 5
     X_std = StandardScaler().fit_transform(df)
     pca = PCA(n_components=nb_of_components)
     principalComponents = pca.fit_transform(X_std)
     PCA_components = pd.DataFrame(principalComponents)
-    PCA_components.rename(columns={0: 'PCA1', 1: 'PCA2', 2: 'PCA3', 3: 'PCA4', 4: 'PCA5'})
-    PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+    s = []
+    for i in range(0, nb_of_components):
+        s.append('PCA' + str(i+1))
+    PCA_components.columns = s
+    model = KMeans(n_clusters=ncluster)
+    model.fit(PCA_components.iloc[:, :nb_of_components])
+    labels = model.predict(PCA_components.iloc[:, :nb_of_components])
+    PCA_components['Cluster'] = labels
+    if filename == 'Dataset_Players':
+        PCA_components['SubCluster'] = None
+        centroids_df2 = pd.DataFrame()
+        for i in PCA_components['Cluster'].unique():
+            PCA_components_w = PCA_components.loc[(PCA_components['Cluster'] == i)]
+            model = KMeans(n_clusters=3)
+            model.fit(PCA_components_w.iloc[:, :nb_of_components])
+            labels = model.predict(PCA_components_w.iloc[:, :nb_of_components])
+            centroids = model.cluster_centers_
+            centroids_df = pd.DataFrame.from_records(centroids)
+            centroids_df.columns = s
+            centroids_df['Cluster'] = ncluster
+            centroids_df['SubCluster'] = 3
+            PCA_components_w['SubCluster'] = labels
+            PCA_components['SubCluster'].loc[(PCA_components['Cluster'] == i)] = PCA_components_w['SubCluster']
+            centroids_df2 = pd.concat([centroids_df2, centroids_df])
+        centroids_df2.insert(0, col_name, 'Centroid')
+        PCA_components.insert(0, col_name, get_name)
+        PCA_components = pd.concat([PCA_components, centroids_df2])
+        PCA_components['Type'] = PCA_components['Cluster'].astype(str) + ' - ' + PCA_components['SubCluster'].astype(
+            str)
+        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+    elif filename == 'Dataset_Teams':
+        PCA_components.insert(0, col_name, get_name)
+        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+    elif filename == 'Dataset_Lineups':
+        PCA_components['SubCluster'] = None
+        centroids_df2 = pd.DataFrame()
+        for i in PCA_components['Cluster'].unique():
+            PCA_components_w = PCA_components.loc[(PCA_components['Cluster'] == i)]
+            model = KMeans(n_clusters=3)
+            model.fit(PCA_components_w.iloc[:, :nb_of_components])
+            labels = model.predict(PCA_components_w.iloc[:, :nb_of_components])
+            centroids = model.cluster_centers_
+            centroids_df = pd.DataFrame.from_records(centroids)
+            centroids_df.columns = s
+            centroids_df['Cluster'] = ncluster
+            centroids_df['SubCluster'] = 3
+            PCA_components_w['SubCluster'] = labels
+            PCA_components['SubCluster'].loc[(PCA_components['Cluster'] == i)] = PCA_components_w['SubCluster']
+            centroids_df2 = pd.concat([centroids_df2, centroids_df])
+        centroids_df2.insert(0, col_name, 'Centroid')
+        PCA_components.insert(0, col_name, get_name)
+        PCA_components = pd.concat([PCA_components, centroids_df2])
+        PCA_components['Type'] = PCA_components['Cluster'].astype(str) + ' - ' + PCA_components['SubCluster'].astype(
+            str)
+        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
     print('PCA_' + filename + ' Created')
 
 
-"""def plot_histo(type, df, nb_of_components):
-    ks = range(1, nb_of_components)
-    inertias = []
-    if type == 'exp_var':
-        X_std = StandardScaler().fit_transform(df)
-        pca = PCA(n_components=nb_of_components)
-        principalComponents = pca.fit_transform(X_std)
-        exp_var_cumul = np.cumsum(pca.explained_variance_ratio_)
-        return px.area(
-            x=range(1, exp_var_cumul.shape[0] + 1),
-            y=exp_var_cumul,
-            labels={"x": "# Components", "y": "Explained Variance"}
-        )
-    elif type == 'nb_clus':
-        X_std = StandardScaler().fit_transform(df)
-        pca = PCA(n_components=nb_of_components)
-        principalComponents = pca.fit_transform(X_std)
-        PCA_components = pd.DataFrame(principalComponents)
-        for k in ks:
-            model = KMeans(n_clusters=k)  # Create a KMeans instance with k clusters: model
-            model.fit(PCA_components.iloc[:, :3])  # Fit model to samples
-            inertias.append(model.inertia_)
-    return px.area(
-        y=inertias,
-        x=ks,
-        labels={"x": "Number of cluster", "y": "Inertia"}
-    )
-
-
-def get_pca(df, nb_of_components):
-    X_std = StandardScaler().fit_transform(df)
-    pca = PCA(n_components=nb_of_components)
-    principalComponents = pca.fit_transform(X_std)
-    PCA_components = pd.DataFrame(principalComponents)
-    return PCA_components
-
-
-def get_cluster_labels(nb_clus):
-    model = KMeans(n_clusters=nb_clus)  # Selecting the number of clusters
-    model.fit(PCA_components.iloc[:, :3])  # Fit the PCA Component in order to plot them
-    labels = model.predict(PCA_components.iloc[:, :3])
-    return labels  # Associate each player with a cluster
-
-
-def get_pca_with_cluster():
-    PCA_components.drop(columns=list(PCA_components.columns)[3:], inplace=True)
-    PCA_components['Cluster'] = labels
-    PCA_components['Name'] = df_non_numeric['PlayersBios_PLAYER_NAME']
-    return PCA_components
-
-
-def get_centroids(nb_clus):
-    model = KMeans(n_clusters=nb_clus)  # Selecting the number of clusters
-    model.fit(PCA_components.iloc[:, :3])  # Fit the PCA Component in order to plot them
-    centroids = model.cluster_centers_
-    return centroids
-
-
-def get_centroids_df(nb_clus):
-    centroids_df = pd.DataFrame.from_records(centroids)
-    centroids_df['Cluster'] = nb_clus
-    centroids_df['Name'] = None
-    for i in range(len(centroids_df) + 1):
-        centroids_df['Name'][i] = 'Cluster - ' + str(i)
-    return centroids_df
-
-
-def get_pca_components_with_centroids():
-    PCA_components_with_centroids = pd.concat([PCA_components, centroids_df])
-    PCA_components_with_centroids.rename(columns={0: 'PCA1', 1: 'PCA2', 2: 'PCA3'}, inplace=True)
-    return PCA_components_with_centroids
-
-
-def get_pca_components_with_distances():
-    for i in range(len(centroids_df)):
-        centroids_df['Cluster'][i] = i
-    PCA_components_with_distances = pd.merge(PCA_components_with_centroids, centroids_df, how='inner', on='Cluster')
-    PCA_components_with_distances.rename(columns={0: 'cx', 1: 'cy', 2: 'cz'}, inplace=True)
-    return PCA_components_with_distances
-
-
-def scatter_3d(size_pop, size_centroid, opac):
-    PCA_components['Size'] = size_pop
-    centroids_df['Size'] = size_centroid
-    fig = px.scatter_3d(PCA_components_with_centroids,
+def scatter_3d(filename, size_pop, size_centroid, opac, html_name):
+    if filename == 'Dataset_Players':
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        df = pd.DataFrame(query)
+        col_name = 'PlayerName'
+        type = 'Type'
+    elif filename == 'Dataset_Teams':
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        df = pd.DataFrame(query)
+        col_name = 'TeamName'
+        type = 'Cluster'
+    elif filename == 'Dataset_Lineups':
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        df = pd.DataFrame(query)
+        col_name = 'LineupName'
+        type = 'Type'
+    df['Size'] = None
+    df['Size'].loc[(df[col_name] == 'Centroid')] = size_centroid
+    df['Size'].loc[(df[col_name] != 'Centroid')] = size_pop
+    si = df['Size'].to_list()
+    fig = px.scatter_3d(df,
                         x='PCA1',
                         y='PCA2',
                         z='PCA3',
-                        color='Cluster',
-                        hover_name='Name',
+                        color=type,
+                        hover_name=col_name,
                         opacity=opac,
-                        size='Size')
-    return fig
+                        size=si)
+    return plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
 
-
-def get_dist_from_centroid():
-    distances = []
-    for i in range(len(PCA_components_with_distances)):
-        distances.append(
-            np.sqrt((PCA_components_with_distances['PCA1'][i] - PCA_components_with_distances['cx'][i]) ** 2
-                    + (PCA_components_with_distances['PCA2'][i] - PCA_components_with_distances['cy'][i]) ** 2
-                    + (PCA_components_with_distances['PCA3'][i] - PCA_components_with_distances['cz'][i]) ** 2))
-    PCA_components_with_distances['Distances'] = distances
-    avg_dist = PCA_components_with_distances.groupby('Cluster').mean()['Distances']
-    avg_dist_by_cluster_df = avg_dist.to_frame()
-    PCA_components_with_avg_distances = pd.merge(PCA_components_with_distances, avg_dist_by_cluster_df, how='inner',
-                                                 on='Cluster')
-    PCA_components_with_avg_distances.rename(columns={'Name_x': 'Name', 'Distances_x': 'Distance from centroid',
-                                                      'Distances_y': 'Average distance from centroid'}, inplace=True)
-    PCA_components_with_avg_distances['Diff distance'] = abs(
-        PCA_components_with_avg_distances['Distance from centroid'] - PCA_components_with_avg_distances[
-            'Average distance from centroid'])
-    PCA_components_with_avg_distances['Ratio'] = abs(
-        PCA_components_with_avg_distances['Distance from centroid'] / PCA_components_with_avg_distances[
-            'Average distance from centroid'])
-    return PCA_components_with_avg_distances
-
-
-def plot_dist_from_centroid():
-    fig2 = px.scatter(PCA_components_with_avg_distances, x='Diff distance', y='Cluster', color='Ratio',
-                      hover_name='Name')
-    return fig2
-
-
-df_numeric = get_numeric_data('Dataset_Players')
-
-df_non_numeric = get_non_numeric_data('Dataset_Players')
-
-df_numeric = delete_columns_with_missing_values(df_numeric, 0.8)
-
-# df_numeric = df_numeric.drop(columns=get_duplicate_columns(df_numeric))
-
-df_numeric = clean_dataset(df_numeric)
-
-PCA_components = get_pca(df_numeric, 30)
-
-labels = get_cluster_labels(7)
-
-PCA_components = get_pca_with_cluster()
-
-centroids = get_centroids(7)
-
-centroids_df = get_centroids_df(7)
-
-PCA_components_with_centroids = get_pca_components_with_centroids()
-
-PCA_components_with_distances = get_pca_components_with_distances()
-
-plotly.offline.plot(plot_histo('exp_var', df_numeric, 30), filename='../Graphs/exp_var.html')
-
-plotly.offline.plot(plot_histo('nb_clus', df_numeric, 30), filename='../Graphs/nb_clus.html')
-
-plotly.offline.plot(scatter_3d(7, 0.5, 1, 1), filename='../Graphs/3d_pca_players.html')
-
-PCA_components_with_avg_distances = get_dist_from_centroid()
-
-plotly.offline.plot(plot_dist_from_centroid(), filename='../Graphs/dist_from_centroid.html')
-"""
