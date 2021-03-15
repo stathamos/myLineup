@@ -222,4 +222,10 @@ g.get_pca('Dataset_Lineups', 15)"""
 g.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7, 'test_t3d')
 g.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7, 'test_l3d')"""
 
-g.get_bests_lineups()
+"""g.get_bests_lineups_detailed()"""
+
+"""g.get_bests_lineups()"""
+
+"""g.get_players_with_type()"""
+
+g.optimization_lineup()
