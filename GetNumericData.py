@@ -1,11 +1,15 @@
 import pandas as pd
 import numpy as np
 import sqlite3
+import plotly.express as px
+import plotly
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
 import sql
 import itertools
+import datetime
 
 
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -187,6 +191,47 @@ def get_pca(filename, nb_of_components):
             str)
         PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
     print('PCA_' + filename + ' Created')
+
+
+def get_lda():
+    query = pd.read_sql_query('SELECT * FROM Numeric_Dataset_Lineups', conn)
+    name = pd.read_sql_query('SELECT LineupsTraditionalStats_GROUP_NAME, '
+                             'LineupsTraditionalStats_GROUP_ID, LineupsTraditionalStats_Season FROM '
+                             'NonNumeric_Dataset_Lineups', conn)
+    query['Score'] = (query['LineupsTraditionalStats_PLUS_MINUS'] * query['LineupsTraditionalStats_GP']) / query[
+        'LineupsTraditionalStats_MIN']
+    l = []
+    for i in query['Score'].to_list():
+        if i >= 2:
+            l.append('Elite')
+        elif i >= 0:
+            l.append('High average')
+        elif i >= -2:
+            l.append('Low average')
+        else:
+            l.append('Bad')
+    query['Class'] = l
+    query.insert(0, 'Names', name['LineupsTraditionalStats_GROUP_NAME'])
+    query.insert(1, 'Ids', name['LineupsTraditionalStats_GROUP_ID'])
+    query.insert(2, 'Season', name['LineupsTraditionalStats_Season'])
+    query_num = query.iloc[:, 3:-1]
+    query_score = query.iloc[:, -1:]
+    query_num_np = query_num.to_numpy()
+    query_score_np = query_score.to_numpy()
+    query_score_np = query_score_np.reshape(len(query_score_np), )
+    lda = LinearDiscriminantAnalysis(n_components=3)
+    X_r2 = lda.fit(query_num_np, query_score_np).transform(query_num_np)
+    LDA_components = pd.DataFrame.from_records(X_r2)
+    LDA_components.rename(columns={0:'LDA1', 1:'LDA2', 2:'LDA3'}, inplace=True)
+    LDA_components.insert(0, 'Names', name['LineupsTraditionalStats_GROUP_NAME'])
+    LDA_components.insert(1, 'Ids', name['LineupsTraditionalStats_GROUP_ID'])
+    LDA_components.insert(2, 'Season', name['LineupsTraditionalStats_Season'])
+    LDA_components['Class'] = l
+    fig = px.scatter_3d(LDA_components, x=0, y=1, z=2, hover_name='Names', color='Class', opacity=0.5, size='Size')
+    html_name = str(datetime.datetime.now()).replace(" ", "").replace("-", "").replace(":", "")[:12] + '_3D_LDA'
+    plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
+    LDA_components.to_sql('LDA_Dataset_Lineups', conn, if_exists='replace', index=False)
+    print('LDA_Dataset_Lineups Created')
 
 
 def converttuple(tup):

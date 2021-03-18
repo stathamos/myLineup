@@ -31,18 +31,30 @@ def scatter_3d(filename, size_pop, size_centroid, opac):
         col_name = 'LineupsTraditionalStats_GROUP_NAME'
         type = 'Type'
     df['Size'] = None
+    df['Symbol'] = None
     df['Size'].loc[(df[col_name] == 'Centroid')] = size_centroid
+    df['Symbol'].loc[(df[col_name] == 'Centroid')] = 'circle'
     df['Size'].loc[(df[col_name] != 'Centroid')] = size_pop
+    df['Symbol'].loc[(df[col_name] != 'Centroid')] = 'cross'
     si = df['Size'].to_list()
-    html_name = str(datetime.datetime.now()).replace(" ", "").replace("-", "").replace(":", "")[:12] + '_' + filename
-    fig = px.scatter_3d(df,
+    html_name = str(datetime.datetime.now()).replace(" ", "").replace("-", "").replace(":", "")[:12] + '_3d_' + filename
+    c1 = px.colors.sequential.Viridis
+    c2 = px.colors.sequential.Plasma
+    c3 = px.colors.sequential.Blues
+    c2.reverse()
+    c3.reverse()
+    c = c1+c2+c3
+    fig = px.scatter_3d(df.sort_values('Type'),
                         x='PCA1',
                         y='PCA2',
                         z='PCA3',
                         color=type,
+                        color_discrete_sequence=c,
+                        symbol='Symbol',
                         hover_name=col_name,
                         opacity=opac,
-                        size=si)
+                        size=si,
+                        title='PCA ' + filename)
     return plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
 
 

@@ -7,14 +7,22 @@ from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import plotly
 import hdbscan
+import sqlite3
 
 
-def plot_clusters(data, algorithm, args, kwds):
-    labels = algorithm(*args, **kwds).fit_predict(data)
+conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
+c = conn.cursor()
+conn.commit()
+
+
+def plot_clusters(algo_name, algorithm, args, kwds):
+    df = pd.read_sql_query('Select * FROM PCA_Dataset_Players', conn)
+    labels = algorithm(*args, **kwds).fit_predict(df.iloc[:, 3:6])
     palette = sns.color_palette('deep', np.unique(labels).max() + 1)
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
-    fig2 = px.scatter(data, x=0, y=1, color=colors)
-    return fig2
+    fig2 = px.scatter_3d(df, x='PCA1', y='PCA2', z='PCA3', color=colors, hover_name='PlayersBios_PLAYER_NAME'
+                         , opacity=0.7)
+    return plotly.offline.plot(fig2, filename='../Graphs/test ' + str(algo_name) + '.html')
 
 
 def get_numeric_data(filename):
@@ -68,7 +76,7 @@ def get_pca(df, nb_of_components):
     return PCA_components
 
 
-df_numeric = get_numeric_data('Dataset_Players')
+'''df_numeric = get_numeric_data('Dataset_Players')
 
 df_non_numeric = get_non_numeric_data('Dataset_Players')
 
@@ -78,16 +86,18 @@ df_numeric = delete_columns_with_missing_values(df_numeric, 0.8)
 
 df_numeric = clean_dataset(df_numeric)
 
-PCA_components = get_pca(df_numeric, 30)
+PCA_components = get_pca(df_numeric, 30)'''
 
-plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.KMeans, (), {'n_clusters':7}), filename='../Graphs/test_kmeans.html')
 
-# plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.AffinityPropagation, (), {'preference':-5.0, 'damping':0.95}), filename='../Graphs/test_AffinityPropagation.html')
 
-# plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.MeanShift, (0.175,), {'cluster_all':False}), filename='../Graphs/test_MeanShift.html')
+# plot_clusters('Kmeans', cluster.KMeans, (), {'n_clusters':7})
+
+plot_clusters('Affinity propagation', cluster.AffinityPropagation, (), {'damping': 0.95})
+
+plot_clusters('MeanShift', cluster.MeanShift, (6,), {'cluster_all': True})
 
 # plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.SpectralClustering, (), {'n_clusters':7}), filename='../Graphs/test_SpectralClustering.html')
 
-# plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.AgglomerativeClustering, (), {'n_clusters':7, 'linkage':'ward'}), filename='../Graphs/test_AgglomerativeClustering.html')
+plot_clusters('AgglomerativeClustering', cluster.AgglomerativeClustering, (), {'n_clusters':7, 'linkage':'average'})
 
-# plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), hdbscan.HDBSCAN, (), {'min_cluster_size':15}), filename='../Graphs/test_hdbscan.html')
+plot_clusters('HDBSCAN', hdbscan.HDBSCAN, (), {'min_cluster_size':15})
