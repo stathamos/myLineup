@@ -11,7 +11,6 @@ import sql
 import itertools
 import datetime
 
-
 pd.options.mode.chained_assignment = None  # default='warn'
 
 conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
@@ -222,7 +221,7 @@ def get_lda():
     lda = LinearDiscriminantAnalysis(n_components=3)
     X_r2 = lda.fit(query_num_np, query_score_np).transform(query_num_np)
     LDA_components = pd.DataFrame.from_records(X_r2)
-    LDA_components.rename(columns={0:'LDA1', 1:'LDA2', 2:'LDA3'}, inplace=True)
+    LDA_components.rename(columns={0: 'LDA1', 1: 'LDA2', 2: 'LDA3'}, inplace=True)
     LDA_components.insert(0, 'Names', name['LineupsTraditionalStats_GROUP_NAME'])
     LDA_components.insert(1, 'Ids', name['LineupsTraditionalStats_GROUP_ID'])
     LDA_components.insert(2, 'Season', name['LineupsTraditionalStats_Season'])
@@ -241,7 +240,8 @@ def converttuple(tup):
 
 def get_players_type(player_id, season):
     conn.row_factory = lambda cursor, row: row[0]
-    type = c.execute('SELECT Type FROM PCA_Dataset_Players WHERE PlayersBios_Player_ID = "' + player_id + '" and PlayersBios_Season = "' + season + '"').fetchall()
+    type = c.execute(
+        'SELECT Type FROM PCA_Dataset_Players WHERE PlayersBios_Player_ID = "' + player_id + '" and PlayersBios_Season = "' + season + '"').fetchall()
     return converttuple(type[0])
 
 
@@ -256,10 +256,10 @@ def sql_query_to_list(query):
 
 def combinliste(seq, k):
     p = []
-    i, imax = 0, 2**len(seq)-1
+    i, imax = 0, 2 ** len(seq) - 1
     while i <= imax:
         s = []
-        j, jmax = 0, len(seq)-1
+        j, jmax = 0, len(seq) - 1
         while j <= jmax:
             if (i >> j) & 1 == 1:
                 s.append(seq[j])
@@ -278,21 +278,12 @@ def listtostring(s):
     return str1[:-2]
 
 
-def get_bests_lineups():
-    df = pd.read_sql_query('SELECT * FROM PCA_Dataset_Lineups', conn)
+def get_lda_bests_lineups():
+    df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite")', conn)
     conn.row_factory = lambda cursor, row: row[0]
-    result = c.execute('SELECT B.Type from Dataset_Lineups A '
-                       'JOIN PCA_Dataset_Lineups B on A.LineupsTraditionalStats_GROUP_NAME = '
-                       'B.LineupsTraditionalStats_GROUP_NAME and A.LineupsTraditionalStats_GROUP_ID = '
-                       'B.LineupsTraditionalStats_GROUP_ID and A.LineupsTraditionalStats_Season = '
-                       'B.LineupsTraditionalStats_Season GROUP BY B.Type ORDER BY '
-                       'avg(LineupsTraditionalStats_PLUS_MINUS) DESC LIMIT 2').fetchall()
     players_type = c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type')
-    bl = pd.DataFrame()
-    for i in result:
-        bl = pd.concat([bl, df.loc[(df['Type'] == converttuple(i))]])
-    li = bl['LineupsTraditionalStats_GROUP_ID'].to_list()
-    ye = bl['LineupsTraditionalStats_Season'].to_list()
+    li = df['Ids'].to_list()
+    ye = df['Season'].to_list()
     l = []
     for k in li:
         l.append([k])
@@ -314,52 +305,11 @@ def get_bests_lineups():
             lineups['Lineup Type'][index] = str(append_p_type).strip("[]").replace("'", "")
             lineups['Type ' + p_type[0]][index] = lineups['Type ' + p_type[0]][index] + 1
     lineups['CheckNbPlayer'] = lineups.sum(axis=1)
-    lineups_count = lineups.iloc[:, 7:15].groupby(lineups.iloc[:, 7:15].columns.tolist()).size().reset_index(name='Count')
+    lineups_count = lineups.iloc[:, 7:15].groupby(lineups.iloc[:, 7:15].columns.tolist()).size().reset_index(
+        name='Count')
     lineups_count.sort_values(by=['Count'], ascending=False, inplace=True)
-    lineups_count.to_sql('Bests_Lineups_count', conn, if_exists='replace', index=False)
+    # lineups_count.to_sql('Bests_Lineups_count', conn, if_exists='replace', index=False)
     print('The bests lineups have been created')
-
-
-def get_bests_lineups_detailed():
-    df = pd.read_sql_query('SELECT * FROM PCA_Dataset_Lineups', conn)
-    conn.row_factory = lambda cursor, row: row[0]
-    result = c.execute('SELECT B.Type from Dataset_Lineups A '
-                       'JOIN PCA_Dataset_Lineups B on A.LineupsTraditionalStats_GROUP_NAME = '
-                       'B.LineupsTraditionalStats_GROUP_NAME and A.LineupsTraditionalStats_GROUP_ID = '
-                       'B.LineupsTraditionalStats_GROUP_ID and A.LineupsTraditionalStats_Season = '
-                       'B.LineupsTraditionalStats_Season GROUP BY B.Type ORDER BY '
-                       'avg(LineupsTraditionalStats_PLUS_MINUS) DESC LIMIT 5').fetchall()
-    players_type = c.execute('SELECT DISTINCT Type FROM PCA_Dataset_Players ORDER BY Type')
-    bl = pd.DataFrame()
-    for i in result:
-        bl = pd.concat([bl, df.loc[(df['Type'] == converttuple(i))]])
-    li = bl['LineupsTraditionalStats_GROUP_ID'].to_list()
-    ye = bl['LineupsTraditionalStats_Season'].to_list()
-    l = []
-    for k in li:
-        l.append([k])
-    lineups = pd.DataFrame.from_records(l, columns=['Lineup'])
-    lineups['Season'] = ye
-    lineups[['P1', 'P2', 'P3', 'P4', 'P5']] = lineups.Lineup.str.split(", ", expand=True)
-    lineups['Lineup Type'] = None
-    for p in players_type:
-        lineups['Type ' + str(converttuple(p))] = 0
-    col = list(lineups)[2:7]
-    for index, row in lineups.iterrows():
-        append_p_type = []
-        for co in col:
-            season = row['Season']
-            player_id = row[co]
-            p_type = get_players_type(player_id, season)
-            append_p_type.append(p_type)
-            append_p_type.sort()
-            lineups['Lineup Type'][index] = str(append_p_type).strip("[]").replace("'", "")
-            lineups['Type ' + p_type][index] = lineups['Type ' + p_type][index] + 1
-    lineups['CheckNbPlayer'] = lineups.sum(axis=1)
-    lineups_count = lineups.iloc[:, 7:29].groupby(lineups.iloc[:, 7:29].columns.tolist()).size().reset_index(name='Count')
-    lineups_count.sort_values(by=['Count'], ascending=False, inplace=True)
-    lineups_count.to_sql('Bests_Lineups_count_detailed', conn, if_exists='replace', index=False)
-    print('The bests lineups detailed have been created')
 
 
 def get_players_with_type():
@@ -370,67 +320,160 @@ def get_players_with_type():
     df.to_sql('Players_with_type', conn, if_exists='replace', index=False)
 
 
+def get_distinct_list(li):
+    for j in range(0, len(li)):
+        li[j].sort()
+    li_f = list()
+    for sublist in li:
+        if sublist not in li_f:
+            li_f.append(sublist)
+    li_f.sort()
+    for j in range(0, len(li_f)):
+        li_f[j].sort()
+    return li_f
+
+
+def get_teams_lineups():
+    team_list = sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
+                                  'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
+                                  '"Regular Season"')
+    for i in team_list:
+        df = pd.read_sql_query('SELECT * FROM Players_with_type WHERE Team_ID = "' + str(i) + '"', conn)
+        players_id = df['PlayersBios_PLAYER_ID'].to_list()
+        players_name = df['PlayersBios_PLAYER_NAME'].to_list()
+        lineups_id = combinliste(players_id, 5)
+        lineups_name = combinliste(players_name, 5)
+        lineups_name = [[x.replace("'", "") for x in l] for l in lineups_name]
+        lineuptype = list()
+        for p in lineups_id:
+            l = list()
+            for pid in p:
+                p_type = df['Type'].astype(str).str[0].loc[(df['PlayersBios_PLAYER_ID'] == pid)].to_list()
+                l.append(p_type[0])
+            lineuptype.append(l)
+        for j in range(0, len(lineuptype)):
+            lineuptype[j].sort()
+        team_lineups = pd.DataFrame()
+        team_lineups['LineupName'] = lineups_name
+        team_lineups['LineupName'] = team_lineups['LineupName'].str.join(', ')
+        team_lineups['LineupID'] = lineups_id
+        team_lineups['LineupID'] = team_lineups['LineupID'].str.join(', ')
+        team_lineups['LineupType'] = lineuptype
+        team_lineups['LineupType'] = team_lineups['LineupType'].str.join(', ')
+        team_lineups['Team'] = i
+        team_lineups.to_sql('Team_Lineups', conn, if_exists='append', index=False)
+    print('All the teams lineups have been inserted')
+
+
+def optimized_stats_team(data_to_insert):
+    col = list(data_to_insert.columns.values)
+    serie_to_pivot = pd.Series([data_to_insert.iloc[0][0], 'Lineup'], index=col[:2])
+    sum_col = col[2:6] + col[7:9] + col[10:12] + col[13:23] + col[34:43] + col[57:59] + col[60:62] + col[63:65] + col[66:]
+    mean_col = col[23:34] + col[43:57]
+    pct_col = [col[6]] + [col[9]] + [col[12]] + [col[59]] + [col[62]] + [col[65]]
+    wa_serie = pd.Series([])
+    pct_serie = pd.Series([])
+    summed_col = data_to_insert[sum_col].sum()
+    for a in mean_col:
+        i = 0
+        t = 0
+        d = dict()
+        while i < len(data_to_insert['Min']):
+            t = t + data_to_insert['Min'].iloc[i] * data_to_insert[a].iloc[i]
+            i += 1
+        d[a] = t/48
+        to_append = pd.Series(d)
+        wa_serie = wa_serie.append(to_append)
+    for a in pct_col:
+        d = dict()
+        if a == 'FG_PCT':
+            d[a] = summed_col['FGM'] / summed_col['FGA']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+        if a == 'FG3_PCT':
+            d[a] = summed_col['FG3M'] / summed_col['FG3A']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+        if a == 'FT_PCT':
+            d[a] = summed_col['FTM'] / summed_col['FTA']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+        if a == 'OPP_FG_PCT':
+            d[a] = summed_col['OPP_FGM'] / summed_col['OPP_FGA']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+        if a == 'OPP_FG3_PCT':
+            d[a] = summed_col['OPP_FG3M'] / summed_col['OPP_FG3A']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+        if a == 'OPP_FT_PCT':
+            d[a] = summed_col['OPP_FTM'] / summed_col['OPP_FTA']
+            to_append = pd.Series(d)
+            pct_serie = pct_serie.append(to_append)
+    serie_to_pivot = serie_to_pivot.append(pct_serie)
+    serie_to_pivot = serie_to_pivot.append(summed_col)
+    serie_to_pivot = serie_to_pivot.append(wa_serie)
+    teams_compare = pd.DataFrame(columns=col)
+    teams_compare = teams_compare.append(serie_to_pivot, ignore_index=True)
+    return teams_compare
+
+
 def optimization_lineup():
     team_list = sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
                                   'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
                                   '"Regular Season"')
-    minutes = [20, 10, 8, 5, 5]
-    for i in team_list:
-        bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
-        for k in range(len(bests_lineups)):
-            bests_lineups[k] = bests_lineups[k].split(', ')
-        df = pd.read_sql_query('SELECT * FROM Players_with_type WHERE Team_ID = "' + str(i) + '"', conn)
-        combi = combinliste(df['Type'].astype(str).str[0].tolist(), 5)
-        for j in range(0, len(combi)):
-            combi[j].sort()
-        combi_f = list()
-        for sublist in combi:
-            if sublist not in combi_f:
-                combi_f.append(sublist)
-        combi_f.sort()
-        data_to_insert = pd.DataFrame()
-        counter = 0
-        for b in bests_lineups:
-            if counter == 5:
-                break
-            else:
-                for m in minutes:
-                    if counter == 5:
-                        break
-                    else:
-                        for c in combi_f:
-                            if b == c:
-                                lineup = []
-                                lineup_with_player_id = []
-                                for p in c:
-                                    list_players_group_by = df['PlayersBios_PLAYER_NAME'].loc[(df['Type'].astype(str).str[0] ==
-                                                                                               p[0])].to_list()
-                                    lineup.append(list_players_group_by)
-                                for p in c:
-                                    list_players_id_group_by = df['PlayersBios_PLAYER_ID'].loc[(df['Type'].astype(str).str[0] ==
-                                                                                                p[0])].to_list()
-                                    lineup_with_player_id.append(list_players_id_group_by)
-                                combi_lineup = [i for i in itertools.product(*lineup) if len(set(i)) == 5]
-                                combi_lineup_with_id = [i for i in itertools.product(*lineup_with_player_id) if len(set(i)) == 5]
-                                for j in range(0, len(combi_lineup)):
-                                    combi_lineup[j] = list(combi_lineup[j])
-                                for j in range(0, len(combi_lineup_with_id)):
-                                    combi_lineup_with_id[j] = list(combi_lineup_with_id[j])
-                                lineup_df = pd.DataFrame()
-                                for j in range(0, len(combi_lineup_with_id)):
-                                    combi_lineup_with_id[j].sort()
-                                combi_lineup_with_id.sort()
-                                combi_lineup_distinct_with_id = list()
-                                for sublist in combi_lineup_with_id:
-                                    if sublist not in combi_lineup_distinct_with_id:
-                                        combi_lineup_distinct_with_id.append(sublist)
-                                for j in combi_lineup_distinct_with_id:
-                                    lineup_df = pd.concat([lineup_df,
-                                                           pd.read_sql_query(sql.optimize(listtostring(j), m), conn)])
-                                lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
-                                data_to_insert = pd.concat([data_to_insert, lineup_df[lineup_df['+/-'] == lineup_df['+/-'].max()]])
-                                counter += 1
-                                break
-                    # data_to_insert.to_sql('Optimized_lineups', conn, if_exists='append', index=False)
+    for t in team_list:
+        optimization_lineup_by_team(t)
+    print('Teams lineups have been optimized')
 
+
+def optimization_lineup_by_team(team_id):
+    minutes = [16, 9, 9, 8, 6]
+    bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
+    for k in range(len(bests_lineups)):
+        bests_lineups[k] = bests_lineups[k].split(', ')
+    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', conn)
+    combi = df['LineupType'].to_list()
+    for k in range(len(combi)):
+        combi[k] = combi[k].split(', ')
+    for j in range(0, len(combi)):
+        combi[j].sort()
+    data_to_insert = pd.DataFrame()
+    boxscore = pd.DataFrame()
+    for m in minutes:
+        done = False
+        for b in bests_lineups:
+            for c in combi:
+                if b == c:
+                    lineup_df = pd.DataFrame()
+                    l_id = df['LineupID'].loc[(df['LineupType'] ==
+                                               str(c).replace('[', '').replace(']', '').replace("'", ''))]
+                    l_id = l_id.to_list()
+                    if len(l_id) < 1:
+                        break
+                    for o in l_id:
+                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
+                    lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
+                    data_to_insert = pd.concat([data_to_insert, lineup_df.nlargest(1, '+/-')])
+                    data_to_insert.sort_values(['Min'], inplace=True)
+                    bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
+                    for p in bs[0]:
+                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize(p, m), conn)])
+                    df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
+                    check = boxscore.groupby(['Lineup'])[["Min", "PF"]].sum()
+                    check['Count'] = boxscore.groupby(['Lineup'])[["Lineup"]].count()
+                    if not check.loc[(check.Min > 36) | (check.PF > 6) | (check.Count > 3)].empty:
+                        data_to_insert = data_to_insert.iloc[1:]
+                        boxscore = boxscore.loc[(boxscore['Min'] != m)]
+                        break
+                    done = True
+                    break
+            if done: break
+    teams_compare = optimized_stats_team(data_to_insert)
+    teams_compare.to_sql('Optimized_teams', conn, if_exists='append', index=False)
+    print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
+    data_to_insert.to_sql('Optimized_lineups', conn, if_exists='append', index=False)
+    print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
+    boxscore.to_sql('Boxscores_optimized_lineups', conn, if_exists='append', index=False)
+    print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 

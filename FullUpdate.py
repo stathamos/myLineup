@@ -63,8 +63,8 @@ g.get_pca('Dataset_Lineups', 15)"""
 
 """g.get_lda()"""
 
-graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
-"""graphs.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7)
+"""graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
+graphs.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7)
 graphs.plot_histo('Dataset_Players', 'exp_var', 30)
 graphs.plot_histo('Dataset_Teams', 'exp_var', 30)
@@ -75,9 +75,11 @@ graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)"""
 
 """g.get_bests_lineups_detailed()"""
 
-"""g.get_bests_lineups()"""
+"""g.get_lda_bests_lineups()"""
 
 """g.get_players_with_type()"""
 
-"""g.optimization_lineup()"""
+"""g.get_teams_lineups()"""
+
+g.optimization_lineup()
 
