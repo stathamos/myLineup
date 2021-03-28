@@ -8,7 +8,6 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
 import sql
-import itertools
 import datetime
 
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -279,7 +278,7 @@ def listtostring(s):
 
 
 def get_lda_bests_lineups():
-    df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite")', conn)
+    df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite", "High average")', conn)
     conn.row_factory = lambda cursor, row: row[0]
     players_type = c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type')
     li = df['Ids'].to_list()
@@ -308,7 +307,7 @@ def get_lda_bests_lineups():
     lineups_count = lineups.iloc[:, 7:15].groupby(lineups.iloc[:, 7:15].columns.tolist()).size().reset_index(
         name='Count')
     lineups_count.sort_values(by=['Count'], ascending=False, inplace=True)
-    # lineups_count.to_sql('Bests_Lineups_count', conn, if_exists='replace', index=False)
+    lineups_count.to_sql('Bests_Lineups_count', conn, if_exists='replace', index=False)
     print('The bests lineups have been created')
 
 
@@ -365,12 +364,54 @@ def get_teams_lineups():
     print('All the teams lineups have been inserted')
 
 
+def weighted_average(df, data_col, weight_col, by_col):
+    df['_data_times_weight'] = df[data_col]*df[weight_col]
+    df['_weight_where_notnull'] = df[weight_col]*pd.notnull(df[data_col])
+    g = df.groupby(by_col)
+    result = g['_data_times_weight'].sum() / g['_weight_where_notnull'].sum()
+    del df['_data_times_weight'], df['_weight_where_notnull']
+    return result.to_frame(name=data_col)
+
+
+def get_players_boxscore(boxscore):
+    boxscore.fillna(value=pd.np.nan, inplace=True)
+    col = list(boxscore.columns.values)
+    sum_col = col[1:6] + col[7:9] + col[10:12] + col[13:23] + col[34:43] + col[57:59] + col[60:62] + col[63:65]\
+              + col[66:]
+    mean_col = col[1:3] + col[23:34] + col[43:57]
+    pct_col = [col[1]] + [col[6]] + [col[9]] + [col[12]] + [col[59]] + [col[62]] + [col[65]]
+    summed_col = boxscore[sum_col].groupby('PlayerName').sum()
+    weight_av = pd.DataFrame()
+    for a in mean_col[2:]:
+        wa = weighted_average(boxscore[mean_col], a, 'Min', 'PlayerName')
+        weight_av[a] = wa[a]
+    for a in pct_col[1:]:
+        if a == 'FG_PCT':
+            summed_col[a] = summed_col['FGM'] / summed_col['FGA']
+        if a == 'FG3_PCT':
+            summed_col[a] = summed_col['FG3M'] / summed_col['FG3A']
+        if a == 'FT_PCT':
+            summed_col[a] = summed_col['FTM'] / summed_col['FTA']
+        if a == 'OPP_FG_PCT':
+            summed_col[a] = summed_col['OPP_FGM'] / summed_col['OPP_FGA']
+        if a == 'OPP_FG3_PCT':
+            summed_col[a] = summed_col['OPP_FG3M'] / summed_col['OPP_FG3A']
+        if a == 'OPP_FT_PCT':
+            summed_col[a] = summed_col['OPP_FTM'] / summed_col['OPP_FTA']
+    boxscore_players = pd.DataFrame(columns=col)
+    summed_col[mean_col[2:]] = weight_av
+    summed_col.insert(0, 'PlayersBios_TEAM_ABBREVIATION', boxscore.iloc[0][0])
+    summed_col.insert(1, 'PlayerName', summed_col.index)
+    boxscore_players = boxscore_players.append(summed_col, ignore_index=True)
+    return boxscore_players
+
+
 def optimized_stats_team(data_to_insert):
     col = list(data_to_insert.columns.values)
     serie_to_pivot = pd.Series([data_to_insert.iloc[0][0], 'Lineup'], index=col[:2])
-    sum_col = col[2:6] + col[7:9] + col[10:12] + col[13:23] + col[34:43] + col[57:59] + col[60:62] + col[63:65] + col[66:]
-    mean_col = col[23:34] + col[43:57]
-    pct_col = [col[6]] + [col[9]] + [col[12]] + [col[59]] + [col[62]] + [col[65]]
+    sum_col = col[3:7] + col[8:10] + col[11:13] + col[14:24] + col[35:44] + col[58:60] + col[61:63] + col[64:66] + col[67:]
+    mean_col = col[24:35] + col[44:58]
+    pct_col = [col[7]] + [col[10]] + [col[13]] + [col[60]] + [col[63]] + [col[66]]
     wa_serie = pd.Series([])
     pct_serie = pd.Series([])
     summed_col = data_to_insert[sum_col].sum()
@@ -428,7 +469,7 @@ def optimization_lineup():
 
 
 def optimization_lineup_by_team(team_id):
-    minutes = [16, 9, 9, 8, 6]
+    minutes = [13, 12, 11, 7, 5]
     bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
     for k in range(len(bests_lineups)):
         bests_lineups[k] = bests_lineups[k].split(', ')
@@ -454,26 +495,66 @@ def optimization_lineup_by_team(team_id):
                     for o in l_id:
                         lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
                     lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
+                    lineup_df.sort_values(['+/-'], ascending=False, inplace=True)
+                    id_to_name = lineup_df['Lineup'].iloc[0]
+                    names = df['LineupName'].loc[(df['LineupID'] == id_to_name)].to_string(index=False)
+                    lineup_df.insert(2, 'LineupName', names)
                     data_to_insert = pd.concat([data_to_insert, lineup_df.nlargest(1, '+/-')])
                     data_to_insert.sort_values(['Min'], inplace=True)
                     bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
                     for p in bs[0]:
-                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize(p, m), conn)])
+                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), conn)])
                     df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
-                    check = boxscore.groupby(['Lineup'])[["Min", "PF"]].sum()
-                    check['Count'] = boxscore.groupby(['Lineup'])[["Lineup"]].count()
-                    if not check.loc[(check.Min > 36) | (check.PF > 6) | (check.Count > 3)].empty:
+                    check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
+                    check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
+                    if not check.loc[(check.Min > 36) | (check.PF > 6) | (check.Count > 4)].empty:
                         data_to_insert = data_to_insert.iloc[1:]
                         boxscore = boxscore.loc[(boxscore['Min'] != m)]
+                        ind = m
                         break
                     done = True
                     break
             if done: break
+    if ind != 6 and len(data_to_insert) < 5:
+        for m in minutes[minutes.index(ind):]:
+            done = False
+            for b in bests_lineups:
+                for c in combi:
+                    if b == c:
+                        lineup_df = pd.DataFrame()
+                        l_id = df['LineupID'].loc[(df['LineupType'] ==
+                                                   str(c).replace('[', '').replace(']', '').replace("'", ''))]
+                        l_id = l_id.to_list()
+                        if len(l_id) < 1:
+                            break
+                        for o in l_id:
+                            lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
+                        lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
+                        lineup_df.sort_values(['+/-'], inplace=True)
+                        id_to_name = lineup_df['Lineup'].iloc[0]
+                        names = df['LineupName'].loc[(df['LineupID'] == id_to_name)].to_string(index=False)
+                        lineup_df.insert(2, 'LineupName', names)
+                        data_to_insert = pd.concat([data_to_insert, lineup_df.nlargest(1, '+/-')])
+                        data_to_insert.sort_values(['Min'], inplace=True)
+                        bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
+                        for p in bs[0]:
+                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), conn)])
+                        df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
+                        check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
+                        check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
+                        if not check.loc[(check.Min > 38) | (check.PF > 6) | (check.Count > 4)].empty:
+                            data_to_insert = data_to_insert.iloc[1:]
+                            boxscore = boxscore.loc[(boxscore['Min'] != m)]
+                            break
+                        done = True
+                        break
+                if done: break
     teams_compare = optimized_stats_team(data_to_insert)
+    boxscore_players = get_players_boxscore(boxscore)
     teams_compare.to_sql('Optimized_teams', conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
     data_to_insert.to_sql('Optimized_lineups', conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
-    boxscore.to_sql('Boxscores_optimized_lineups', conn, if_exists='append', index=False)
+    boxscore_players.to_sql('Optimized_boxscores_lineups', conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 

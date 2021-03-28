@@ -83,3 +83,4 @@ graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)"""
 
 g.optimization_lineup()
 
+"""g.optimization_lineup_by_team(1610612760)"""
