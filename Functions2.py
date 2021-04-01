@@ -2,36 +2,34 @@ import requests
 import sqlite3
 import time
 import pandas as pd
-
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creation of the DataBase
-c = conn.cursor()
-conn.commit()
+import Database
 
 
 def create_index(PlayerOrTeam, Type, TableName):
     if PlayerOrTeam == 'Player' and Type == 'Offense':
-        c.execute(
+        Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("PLAYER_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
     elif PlayerOrTeam == 'Player' and Type == 'Defense':
-        c.execute(
+        Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("CLOSE_DEF_PERSON_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
     elif PlayerOrTeam == 'Team' and Type == '':
-        c.execute(
+        Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("TEAM_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
     elif PlayerOrTeam == 'Lineups' and Type == '':
-        c.execute(
+        Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("GROUP_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
 
 
 def sql_column_to_list(type):
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')
-    conn.row_factory = lambda cursor, row: row[0]
-    c = conn.cursor()
-    list = c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + type + '%"').fetchall()
+    list = Database.c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + type + '%"').fetchall()
+    j = 0
+    for i in list:
+        list[j] = converttuple(i[0])
+        j += 1
     return list
 
 
@@ -174,7 +172,7 @@ def get_players_data(url, typestat):
                     table = 'PlayersBios_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col  # Set the columns name for the DataFrame
-                    dataframe.to_sql('PlayersBios', conn, if_exists='append', index=False)  # Insert data in SQLiteDB
+                    dataframe.to_sql('PlayersBios', Database.conn, if_exists='append', index=False)  # Insert data in SQLiteDB
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))  # Shows the number of iteration made/left
                     i += 1
                     time.sleep(1)  # Forced to put this, or the NBA.com website would block my requests
@@ -208,27 +206,27 @@ def get_players_data(url, typestat):
                             table = 'PlayersGeneralStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralStats', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Usage':
                             table = 'PlayersGeneralUsageStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralUsageStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralUsageStats', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Scoring':
                             table = 'PlayersGeneralScoringStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralScoringStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralScoringStats', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Advanced':
                             table = 'PlayersGeneralAdvancedStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralAdvancedStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralAdvancedStats', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Misc':
                             table = 'PlayersGeneralMiscStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralMiscStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralMiscStats', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(GeneralType)))
                         i += 1
                         time.sleep(1)
@@ -265,7 +263,7 @@ def get_players_data(url, typestat):
                         table = 'PlayersGeneralStatsDetailed_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('PlayersGeneralStatsDetailed', conn, if_exists='append', index=False)
+                        dataframe.to_sql('PlayersGeneralStatsDetailed', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(GeneralTypeDetails)))
                         i += 1
                         time.sleep(1)
@@ -294,7 +292,7 @@ def get_players_data(url, typestat):
                     table = 'PlayersEstimMetrics_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col
-                    dataframe.to_sql('PlayersEstimMetrics', conn, if_exists='append', index=False)
+                    dataframe.to_sql('PlayersEstimMetrics', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))
                     i += 1
                     time.sleep(1)
@@ -328,27 +326,27 @@ def get_players_data(url, typestat):
                             table = 'PlayersGeneralStatsClutch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralStatsClutch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralStatsClutch', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Usage':
                             table = 'PlayersGeneralUsageStatsClutch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralUsageStatsClutch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralUsageStatsClutch', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Scoring':
                             table = 'PlayersGeneralScoringStatsClutch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralScoringStatsClutch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralScoringStatsClutch', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Advanced':
                             table = 'PlayersGeneralAdvancedStatsClutch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralAdvancedStatsClutch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralAdvancedStatsClutch', Database.conn, if_exists='append', index=False)
                         elif GenTyp == 'Misc':
                             table = 'PlayersGeneralMiscStatsClutch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersGeneralMiscStatsClutch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersGeneralMiscStatsClutch', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(GeneralType)))
                         i += 1
                         time.sleep(1)
@@ -386,57 +384,57 @@ def get_players_data(url, typestat):
                             table = 'PlayersPlaytypes_Misc_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Misc', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Misc', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'OffRebound':
                             table = 'PlayersPlaytypes_OffRebound_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_OffRebound', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_OffRebound', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'OffScreen':
                             table = 'PlayersPlaytypes_OffScreenc_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_OffScreen', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_OffScreen', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Cut':
                             table = 'PlayersPlaytypes_Cut_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Cut', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Cut', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Handoff':
                             table = 'PlayersPlaytypes_Handoff_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Handoff', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Handoff', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Spotup':
                             table = 'PlayersPlaytypes_Spotup_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Spotup', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Spotup', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Postup':
                             table = 'PlayersPlaytypes_Postup_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Postup', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Postup', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'PRBallHandler':
                             table = 'PlayersPlaytypes_PRBallHandler_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_PRBallHandler', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_PRBallHandler', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'PRRollman':
                             table = 'PlayersPlaytypes_PRRollman_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_PRRollman', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_PRRollman', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Isolation':
                             table = 'PlayersPlaytypes_Isolation_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Isolation', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Isolation', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Transition':
                             table = 'PlayersPlaytypes_Transition_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPlaytypes_Transition', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPlaytypes_Transition', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(Playtypes)))
                         i += 1
                         time.sleep(1)
@@ -480,62 +478,62 @@ def get_players_data(url, typestat):
                             table = 'PlayersTrackingDrives_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingDrives', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingDrives', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Defense':
                             table = 'PlayersTrackingDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingDefense', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'CatchShoot':
                             table = 'PlayersTrackingCatchShoot_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingCatchShoot', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingCatchShoot', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Passing':
                             table = 'PlayersTrackingPassing_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingPassing', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingPassing', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Possessions':
                             table = 'PlayersTrackingPossessions_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingPossessions', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingPossessions', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PullUpShot':
                             table = 'PlayersTrackingPullUpShot_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingPullUpShot', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingPullUpShot', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Rebounding':
                             table = 'PlayersTrackingRebounding_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingRebounding', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingRebounding', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Efficiency':
                             table = 'PlayersTrackingEfficiency_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingEfficiency', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingEfficiency', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'SpeedDistance':
                             table = 'PlayersTrackingSpeedDistance_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingSpeedDistance', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingSpeedDistance', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'ElbowTouch':
                             table = 'PlayersTrackingElbowTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingElbowTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingElbowTouch', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PostTouch':
                             table = 'PlayersTrackingPostTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingPostTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingPostTouch', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PaintTouch':
                             table = 'PlayersTrackingPaintTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersTrackingPaintTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersTrackingPaintTouch', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(PtMeasureType)))
                         i += 1
                         time.sleep(1)
@@ -580,27 +578,27 @@ def get_players_data(url, typestat):
                             table = 'Players3ptsDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('Players3ptsDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('Players3ptsDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == '2 Pointers':
                             table = 'Players2ptsDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('Players2ptsDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('Players2ptsDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Less Than 6Ft':
                             table = 'PlayersPaintDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersPaintDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersPaintDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Less Than 10Ft':
                             table = 'PlayersOutsidePaintDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersOutsidePaintDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersOutsidePaintDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Greater Than 15Ft':
                             table = 'PlayersFarFromBasketDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersFarFromBasketDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersFarFromBasketDefense', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(DefenseCategory)))
                         i += 1
                         time.sleep(1)
@@ -638,22 +636,22 @@ def get_players_data(url, typestat):
                             table = 'PlayersShotOverallRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotOverallRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotOverallRange', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Catch and Shoot':
                             table = 'PlayersShotCandS_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotCandS', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotCandS', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Pullups':
                             table = 'PlayersShotPullups_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotPullups', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotPullups', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Less Than 10 ft':
                             table = 'PlayersShot10FeetRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot10FeetRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot10FeetRange', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(GeneralRange)))
                         i += 1
                         time.sleep(1)
@@ -690,27 +688,27 @@ def get_players_data(url, typestat):
                             table = 'PlayersShot0DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot0DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot0DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '1 Dribble':
                             table = 'PlayersShot1DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot1DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot1DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '2 Dribbles':
                             table = 'PlayersShot2DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot2DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot2DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '3-6 Dribbles':
                             table = 'PlayersShot3_6DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot3_6DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot3_6DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '7+ Dribbles':
                             table = 'PlayersShot7DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShot7DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShot7DribbleRange', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(DribbleRange)))
                         i += 1
                         time.sleep(1)
@@ -748,17 +746,17 @@ def get_players_data(url, typestat):
                             table = 'PlayersShotTouchTimeLT2Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotTouchTimeLT2Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotTouchTimeLT2Sec', Database.conn, if_exists='append', index=False)
                         elif TouRan == 'Touch 2-6 Seconds':
                             table = 'PlayersShotTouchTime2_6Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotTouchTime2_6Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotTouchTime2_6Sec', Database.conn, if_exists='append', index=False)
                         elif TouRan == 'Touch 6+ Seconds':
                             table = 'PlayersShotTouchTime6Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersShotTouchTime6Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersShotTouchTime6Sec', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(TouchTimeRange)))
                         i += 1
                         time.sleep(1)
@@ -794,22 +792,22 @@ def get_players_data(url, typestat):
                             table = 'PlayersCloseDefDist_0_2_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersCloseDefDist_0_2', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersCloseDefDist_0_2', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '2-4 Feet - Tight':
                             table = 'PlayersCloseDefDist_2_4_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersCloseDefDist_2_4', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersCloseDefDist_2_4', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '4-6 Feet - Open':
                             table = 'PlayersCloseDefDist_4_6_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersCloseDefDist_4_6', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersCloseDefDist_4_6', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '6+ Feet - Wide Open':
                             table = 'PlayersCloseDefDist_6_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('PlayersCloseDefDist_6', conn, if_exists='append', index=False)
+                            dataframe.to_sql('PlayersCloseDefDist_6', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(CloseDefDistRange)))
                         i += 1
                         time.sleep(1)
@@ -850,7 +848,7 @@ def get_players_data(url, typestat):
                         table = 'PlayersShotLocation_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('PlayersShotLocation', conn, if_exists='append', index=False)
+                        dataframe.to_sql('PlayersShotLocation', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(MeasureType)))
                         i += 1
                         time.sleep(1)
@@ -879,7 +877,7 @@ def get_players_data(url, typestat):
                     table = 'PlayersHustleStats_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col
-                    dataframe.to_sql('PlayersHustleStats', conn, if_exists='append', index=False)
+                    dataframe.to_sql('PlayersHustleStats', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))
                     i += 1
                     time.sleep(1)
@@ -1027,32 +1025,32 @@ def get_teams_data(url, typestat):
                             table = 'TeamsTraditionalStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTraditionalStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTraditionalStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Advanced':
                             table = 'TeamsAdvancedStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsAdvancedStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsAdvancedStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Four Factors':
                             table = 'TeamsFourFactorsStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsFourFactorsStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsFourFactorsStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Scoring':
                             table = 'TeamsScoringStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsScoringStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsScoringStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Misc':
                             table = 'TeamsMiscStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsMiscStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsMiscStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Opponent':
                             table = 'TeamsOpponentStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsOpponentStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsOpponentStats', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(MeasureType)))
                         i += 1
                         time.sleep(1)  # Forced to put this, or the NBA.com website would block my requests
@@ -1086,7 +1084,7 @@ def get_teams_data(url, typestat):
                     table = 'TeamsEstimatedMetrics_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col
-                    dataframe.to_sql('TeamsEstimatedMetrics', conn, if_exists='append', index=False)
+                    dataframe.to_sql('TeamsEstimatedMetrics', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))
                     i += 1
                     time.sleep(1)
@@ -1122,32 +1120,32 @@ def get_teams_data(url, typestat):
                             table = 'TeamsTraditionalClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTraditionalClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTraditionalClutchStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Advanced':
                             table = 'TeamsAdvancedClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsAdvancedClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsAdvancedClutchStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Four Factors':
                             table = 'TeamsFourFactorsClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsFourFactorsClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsFourFactorsClutchStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Scoring':
                             table = 'TeamsScoringClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsScoringClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsScoringClutchStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Misc':
                             table = 'TeamsMiscClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsMiscClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsMiscClutchStats', Database.conn, if_exists='append', index=False)
                         elif MeaTyp == 'Opponent':
                             table = 'TeamsOpponentClutchStats_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsOpponentClutchStats', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsOpponentClutchStats', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(MeasureType)))
                         i += 1
                         time.sleep(1)
@@ -1184,57 +1182,57 @@ def get_teams_data(url, typestat):
                             table = 'TeamsPlaytypes_Misc_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Misc', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Misc', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'OffRebound':
                             table = 'TeamsPlaytypes_OffRebound_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_OffRebound', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_OffRebound', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'OffScreen':
                             table = 'TeamsPlaytypes_OffScreenc_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_OffScreen', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_OffScreen', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Cut':
                             table = 'TeamsPlaytypes_Cut_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Cut', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Cut', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Handoff':
                             table = 'TeamsPlaytypes_Handoff_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Handoff', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Handoff', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Spotup':
                             table = 'TeamsPlaytypes_Spotup_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Spotup', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Spotup', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Postup':
                             table = 'TeamsPlaytypes_Postup_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Postup', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Postup', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'PRBallHandler':
                             table = 'TeamsPlaytypes_PRBallHandler_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_PRBallHandler', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_PRBallHandler', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'PRRollman':
                             table = 'TeamsPlaytypes_PRRollman_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_PRRollman', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_PRRollman', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Isolation':
                             table = 'TeamsPlaytypes_Isolation_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Isolation', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Isolation', Database.conn, if_exists='append', index=False)
                         elif PlayTy == 'Transition':
                             table = 'TeamsPlaytypes_Transition_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPlaytypes_Transition', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPlaytypes_Transition', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(Playtypes)))
                         i += 1
                         time.sleep(1)
@@ -1278,62 +1276,62 @@ def get_teams_data(url, typestat):
                             table = 'TeamsTrackingDrives_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingDrives', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingDrives', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Defense':
                             table = 'TeamsTrackingDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingDefense', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'CatchShoot':
                             table = 'TeamsTrackingCatchShoot_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingCatchShoot', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingCatchShoot', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Passing':
                             table = 'TeamsTrackingPassing_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingPassing', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingPassing', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Possessions':
                             table = 'TeamsTrackingPossessions_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingPossessions', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingPossessions', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PullUpShot':
                             table = 'TeamsTrackingPullUpShot_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingPullUpShot', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingPullUpShot', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Rebounding':
                             table = 'TeamsTrackingRebounding_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingRebounding', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingRebounding', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'Efficiency':
                             table = 'TeamsTrackingEfficiency_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingEfficiency', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingEfficiency', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'SpeedDistance':
                             table = 'TeamsTrackingSpeedDistance_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingSpeedDistance', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingSpeedDistance', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'ElbowTouch':
                             table = 'TeamsTrackingElbowTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingElbowTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingElbowTouch', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PostTouch':
                             table = 'TeamsTrackingPostTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingPostTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingPostTouch', Database.conn, if_exists='append', index=False)
                         elif PtMeaTy == 'PaintTouch':
                             table = 'TeamsTrackingPaintTouch_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsTrackingPaintTouch', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsTrackingPaintTouch', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(PtMeasureType)))
                         i += 1
                         time.sleep(1)
@@ -1378,27 +1376,27 @@ def get_teams_data(url, typestat):
                             table = 'Teams3ptsDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('Teams3ptsDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('Teams3ptsDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == '2 Pointers':
                             table = 'Teams2ptsDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('Teams2ptsDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('Teams2ptsDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Less Than 6Ft':
                             table = 'TeamsPaintDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsPaintDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsPaintDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Less Than 10Ft':
                             table = 'TeamsOutsidePaintDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsOutsidePaintDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsOutsidePaintDefense', Database.conn, if_exists='append', index=False)
                         elif DefCat == 'Greater Than 15Ft':
                             table = 'TeamsFarFromBasketDefense_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsFarFromBasketDefense', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsFarFromBasketDefense', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(DefenseCategory)))
                         i += 1
                         time.sleep(1)
@@ -1436,22 +1434,22 @@ def get_teams_data(url, typestat):
                             table = 'TeamsShotOverallRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotOverallRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotOverallRange', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Catch and Shoot':
                             table = 'TeamsShotCandS_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotCandS', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotCandS', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Pullups':
                             table = 'TeamsShotPullups_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotPullups', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotPullups', Database.conn, if_exists='append', index=False)
                         elif GenRan == 'Less Than 10 ft':
                             table = 'TeamsShot10FeetRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot10FeetRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot10FeetRange', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(GeneralRange)))
                         i += 1
                         time.sleep(1)
@@ -1488,27 +1486,27 @@ def get_teams_data(url, typestat):
                             table = 'TeamsShot0DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot0DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot0DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '1 Dribble':
                             table = 'TeamsShot1DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot1DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot1DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '2 Dribbles':
                             table = 'TeamsShot2DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot2DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot2DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '3-6 Dribbles':
                             table = 'TeamsShot3_6DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot3_6DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot3_6DribbleRange', Database.conn, if_exists='append', index=False)
                         elif DriRan == '7+ Dribbles':
                             table = 'TeamsShot7DribbleRange_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShot7DribbleRange', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShot7DribbleRange', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(DribbleRange)))
                         i += 1
                         time.sleep(1)
@@ -1546,17 +1544,17 @@ def get_teams_data(url, typestat):
                             table = 'TeamsShotTouchTimeLT2Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotTouchTimeLT2Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotTouchTimeLT2Sec', Database.conn, if_exists='append', index=False)
                         elif TouRan == 'Touch 2-6 Seconds':
                             table = 'TeamsShotTouchTime2_6Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotTouchTime2_6Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotTouchTime2_6Sec', Database.conn, if_exists='append', index=False)
                         elif TouRan == 'Touch 6+ Seconds':
                             table = 'TeamsShotTouchTime6Sec_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsShotTouchTime6Sec', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsShotTouchTime6Sec', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(TouchTimeRange)))
                         i += 1
                         time.sleep(1)
@@ -1592,22 +1590,22 @@ def get_teams_data(url, typestat):
                             table = 'TeamsCloseDefDist_0_2_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsCloseDefDist_0_2', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsCloseDefDist_0_2', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '2-4 Feet - Tight':
                             table = 'TeamsCloseDefDist_2_4_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsCloseDefDist_2_4', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsCloseDefDist_2_4', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '4-6 Feet - Open':
                             table = 'TeamsCloseDefDist_4_6_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsCloseDefDist_4_6', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsCloseDefDist_4_6', Database.conn, if_exists='append', index=False)
                         elif ClosDef == '6+ Feet - Wide Open':
                             table = 'TeamsCloseDefDist_6_'
                             table_col = [table + x for x in col]
                             dataframe.columns = table_col
-                            dataframe.to_sql('TeamsCloseDefDist_6', conn, if_exists='append', index=False)
+                            dataframe.to_sql('TeamsCloseDefDist_6', Database.conn, if_exists='append', index=False)
                         print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(CloseDefDistRange)))
                         i += 1
                         time.sleep(1)
@@ -1644,7 +1642,7 @@ def get_teams_data(url, typestat):
                     table = 'TeamsShotLocation_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col
-                    dataframe.to_sql('TeamsShotLocation', conn, if_exists='append', index=False)
+                    dataframe.to_sql('TeamsShotLocation', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))
                     i += 1
                     time.sleep(1)
@@ -1673,7 +1671,7 @@ def get_teams_data(url, typestat):
                     table = 'TeamsHustleStats_'
                     table_col = [table + x for x in col]
                     dataframe.columns = table_col
-                    dataframe.to_sql('TeamsHustleStats', conn, if_exists='append', index=False)
+                    dataframe.to_sql('TeamsHustleStats', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType)))
                     i += 1
                     time.sleep(1)
@@ -1692,7 +1690,7 @@ def get_lineups_data(url):
     header = {'Accept': 'application/json, text/plain, */*',
               'Accept-Encoding': 'gzip, deflate, br',
               'Accept-Language': 'en-US,en;q=0.9,fr-FR;q=0.8,fr;q=0.7',
-              'Connection': 'keep-alive',
+              'Database.connection': 'keep-alive',
               'Host': 'stats.nba.com',
               'Origin': 'https://www.nba.com',
               'Referer': 'https://www.nba.com/',
@@ -1736,32 +1734,32 @@ def get_lineups_data(url):
                         table = 'LineupsTraditionalStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsTraditionalStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsTraditionalStats', Database.conn, if_exists='append', index=False)
                     elif MeaTyp == 'Advanced':
                         table = 'LineupsAdvancedStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsAdvancedStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsAdvancedStats', Database.conn, if_exists='append', index=False)
                     elif MeaTyp == 'Four Factors':
                         table = 'LineupsFourFactorsStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsFourFactorsStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsFourFactorsStats', Database.conn, if_exists='append', index=False)
                     elif MeaTyp == 'Scoring':
                         table = 'LineupsScoringStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsScoringStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsScoringStats', Database.conn, if_exists='append', index=False)
                     elif MeaTyp == 'Misc':
                         table = 'LineupsMiscStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsMiscStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsMiscStats', Database.conn, if_exists='append', index=False)
                     elif MeaTyp == 'Opponent':
                         table = 'LineupsOpponentStats_'
                         table_col = [table + x for x in col]
                         dataframe.columns = table_col
-                        dataframe.to_sql('LineupsOpponentStats', conn, if_exists='append', index=False)
+                        dataframe.to_sql('LineupsOpponentStats', Database.conn, if_exists='append', index=False)
                     print(str(i) + '/' + str(len(Seasons) * len(SeasonType) * len(MeasureType)))
                     i += 1
                     time.sleep(1)  # Forced to put this, or the NBA.com website would block my requests
@@ -1788,7 +1786,7 @@ def clean_dataset(dataset):
                           "_TYPE_GROUPING", "_PLAYER_POSITION", "_DEFENSE_CATEGORY", "_RANK", "_Defense_Category",
                           "_DefenseCategory", "Hustle"]
 
-        query_players = pd.read_sql_query('SELECT * FROM Dataset_Players', conn)
+        query_players = pd.read_sql_query('SELECT * FROM Dataset_Players', Database.conn)
         df = pd.DataFrame(query_players)
         df_columns_players = df.columns.to_list()
         to_add = []
@@ -1803,7 +1801,9 @@ def clean_dataset(dataset):
         df_columns_players = to_add + df_columns_players
         main_list = list(set(df.columns.to_list()) - set(df_columns_players))
         df.drop(main_list, axis=1, inplace=True)
-        df.to_sql('Dataset_Players_2', conn, if_exists='replace', index=False)
+        df.to_sql('Dataset_Players', Database.conn, if_exists='replace', index=False)
+        Database.c.execute('CREATE INDEX "Index_Dataset_Players" ON "Dataset_Players" ("PlayersBios_PLAYER_ID"	ASC, '
+                           '"PlayersBios_Season" ASC, "PlayersBios_SeasonType"	ASC);')
         print('Dataset Players cleaned')
 
     elif dataset == 'Teams':
@@ -1817,10 +1817,10 @@ def clean_dataset(dataset):
                           "_TYPE_GROUPING", "_PLAYER_POSITION", "_DEFENSE_CATEGORY", "_RANK", "_Defense_Category",
                           "_DefenseCategory", "Hustle"]
 
-        query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Teams', conn)
+        query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Teams', Database.conn)
         df = pd.DataFrame(query_Teams)
         df_columns_Teams = df.columns.to_list()
-        column_not_to_drop = df_columns_Teams[0:26]+df_columns_Teams[56:58]
+        column_not_to_drop = df_columns_Teams[0:28]
         to_add = []
         for j in column_not_to_drop:
             to_add.append(j)
@@ -1830,7 +1830,10 @@ def clean_dataset(dataset):
         df_columns_Teams = to_add + df_columns_Teams
         main_list = list(set(df.columns.to_list()) - set(df_columns_Teams))
         df.drop(main_list, axis=1, inplace=True)
-        df.to_sql('Dataset_Teams_2', conn, if_exists='replace', index=False)
+        df.to_sql('Dataset_Teams', Database.conn, if_exists='replace', index=False)
+        Database.c.execute(
+            'CREATE INDEX "Index_Dataset_Teams" ON "Dataset_Teams" ("TeamsTraditionalStats_TEAM_ID"	ASC, '
+            '"TeamsTraditionalStats_Season" ASC, "TeamsTraditionalStats_SeasonType"	ASC);')
         print('Dataset Teams cleaned')
 
     elif dataset == 'Lineups':
@@ -1844,7 +1847,7 @@ def clean_dataset(dataset):
                           "_TYPE_GROUPING", "_PLAYER_POSITION", "_DEFENSE_CATEGORY", "_RANK", "_Defense_Category",
                           "_DefenseCategory", "Hustle", "_GROUP_ID", "_GROUP_NAME"]
 
-        query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Lineups', conn)
+        query_Teams = pd.read_sql_query('SELECT * FROM Dataset_Lineups', Database.conn)
         df = pd.DataFrame(query_Teams)
         df_columns_Teams = df.columns.to_list()
         column_not_to_drop = df_columns_Teams[1:30]+df_columns_Teams[57:59]
@@ -1857,11 +1860,21 @@ def clean_dataset(dataset):
         df_columns_Teams = to_add + df_columns_Teams
         main_list = list(set(df.columns.to_list()) - set(df_columns_Teams))
         df.drop(main_list, axis=1, inplace=True)
-        conn.row_factory = lambda cursor, row: row[0]
-        c = conn.cursor()
-        lst = c.execute('select LineupsTraditionalStats_GROUP_ID from Dataset_Lineups').fetchall()
+        lst = Database.c.execute('select LineupsTraditionalStats_GROUP_ID from Dataset_Lineups').fetchall()
+        j = 0
+        for i in lst:
+            lst[j] = converttuple(i[0])
+            j += 1
         lst = [e[1:len(e) - 1] for e in lst]
         lst = [w.replace('-', ', ') for w in lst]
         df['LineupsTraditionalStats_GROUP_ID'] = lst
-        df.to_sql('Dataset_Lineups_2', conn, if_exists='replace', index=False)
+        df.to_sql('Dataset_Lineups', Database.conn, if_exists='replace', index=False)
+        Database.c.execute(
+            'CREATE INDEX "Index_Dataset_Lineups" ON "Dataset_Lineups" ("LineupsTraditionalStats_PLAYER_ID"	'
+            'ASC, "LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')
         print('Dataset Lineups cleaned')
+
+
+def converttuple(tup):
+    s = ''.join(tup)
+    return s

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import sqlite3
+import Database
 import plotly.express as px
 import plotly
 from sklearn.cluster import KMeans
@@ -13,69 +13,65 @@ import datetime
 pd.options.mode.chained_assignment = None  # default='warn'
 pd.options.display.max_colwidth = 100
 
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
-c = conn.cursor()
-conn.commit()
-
 
 def get_numeric_data(filename):
     if filename == 'Dataset_Players':
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[:columns.index('PlayersBios_GP')], inplace=True)
-        df.to_sql('Numeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('Numeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('Numeric_' + filename + ' inserted')
     elif filename == 'Dataset_Teams':
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['TeamsTraditionalStats_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[:columns.index('TeamsTraditionalStats_GP')], inplace=True)
-        df.to_sql('Numeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('Numeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('Numeric_' + filename + ' inserted')
     else:
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['LineupsTraditionalStats_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[:columns.index('LineupsTraditionalStats_GP')], inplace=True)
-        df.to_sql('Numeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('Numeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('Numeric_' + filename + ' inserted')
     return
 
 
 def get_non_numeric_data(filename):
     if filename == 'Dataset_Players':
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[columns.index('PlayersBios_GP'):], inplace=True)
-        df.to_sql('NonNumeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('NonNumeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('NonNumeric_' + filename + ' inserted')
     elif filename == 'Dataset_Teams':
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['TeamsTraditionalStats_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[columns.index('TeamsTraditionalStats_GP'):], inplace=True)
-        df.to_sql('NonNumeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('NonNumeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('NonNumeric_' + filename + ' inserted')
     else:
-        query = pd.read_sql_query('SELECT * FROM ' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
         df = df.loc[(df['LineupsTraditionalStats_SeasonType'] == 'Regular Season')]
         columns = df.columns.to_list()
         df.drop(columns=columns[columns.index('LineupsTraditionalStats_GP'):], inplace=True)
-        df.to_sql('NonNumeric_' + filename, conn, if_exists='replace', index=False)
+        df.to_sql('NonNumeric_' + filename, Database.conn, if_exists='replace', index=False)
         print('NonNumeric_' + filename + ' inserted')
     return
 
 
 def clean_numeric_dataset(filename, missing_rate):
-    query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+    query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
     df = pd.DataFrame(query)
     duplicateColumnNames = []
     for x in range(df.shape[1]):  # Iterate over all the columns in dataframe
@@ -89,33 +85,33 @@ def clean_numeric_dataset(filename, missing_rate):
     df.fillna(0, inplace=True)
     indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
     df[indices_to_keep].astype(np.float64)
-    df.to_sql('Numeric_' + filename, conn, if_exists='replace', index=False)
+    df.to_sql('Numeric_' + filename, Database.conn, if_exists='replace', index=False)
     print('Numeric_' + filename + ' cleaned')
 
 
 def get_pca(filename, nb_of_components):
     if filename == 'Dataset_Players':
-        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         name = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME, PlayersBios_PLAYER_ID, '
                                  'PlayersBios_Season FROM NonNumeric_'
-                                 + filename, conn)
+                                 + filename, Database.conn)
         df = pd.DataFrame(query)
         get_name = pd.DataFrame(name)
         col_name = 'PlayerName'
         ncluster = 7
     elif filename == 'Dataset_Teams':
-        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         name = pd.read_sql_query('SELECT TeamsTraditionalStats_TEAM_NAME, TeamsTraditionalStats_TEAM_ID, '
-                                 ' TeamsTraditionalStats_Season FROM NonNumeric_' + filename, conn)
+                                 ' TeamsTraditionalStats_Season FROM NonNumeric_' + filename, Database.conn)
         df = pd.DataFrame(query)
         get_name = pd.DataFrame(name)
         col_name = 'TeamName'
         ncluster = 4
     elif filename == 'Dataset_Lineups':
-        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         name = pd.read_sql_query('SELECT LineupsTraditionalStats_GROUP_NAME, '
                                  'LineupsTraditionalStats_GROUP_ID, LineupsTraditionalStats_Season FROM '
-                                 'NonNumeric_' + filename, conn)
+                                 'NonNumeric_' + filename, Database.conn)
         df = pd.DataFrame(query)
         get_name = pd.DataFrame(name)
         col_name = 'LineupName'
@@ -157,12 +153,12 @@ def get_pca(filename, nb_of_components):
         PCA_components = pd.concat([PCA_components, centroids_df2])
         PCA_components['Type'] = PCA_components['Cluster'].astype(str) + ' - ' + PCA_components['SubCluster'].astype(
             str)
-        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+        PCA_components.to_sql('PCA_' + filename, Database.conn, if_exists='replace', index=False)
     elif filename == 'Dataset_Teams':
         PCA_components.insert(0, 'TeamsTraditionalStats_TEAM_NAME', get_name['TeamsTraditionalStats_TEAM_NAME'])
         PCA_components.insert(1, 'TeamsTraditionalStats_TEAM_ID', get_name['TeamsTraditionalStats_TEAM_ID'])
         PCA_components.insert(2, 'TeamsTraditionalStats_Season', get_name['TeamsTraditionalStats_Season'])
-        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+        PCA_components.to_sql('PCA_' + filename, Database.conn, if_exists='replace', index=False)
     elif filename == 'Dataset_Lineups':
         PCA_components['SubCluster'] = None
         centroids_df2 = pd.DataFrame()
@@ -188,15 +184,15 @@ def get_pca(filename, nb_of_components):
         PCA_components = pd.concat([PCA_components, centroids_df2])
         PCA_components['Type'] = PCA_components['Cluster'].astype(str) + ' - ' + PCA_components['SubCluster'].astype(
             str)
-        PCA_components.to_sql('PCA_' + filename, conn, if_exists='replace', index=False)
+        PCA_components.to_sql('PCA_' + filename, Database.conn, if_exists='replace', index=False)
     print('PCA_' + filename + ' Created')
 
 
 def get_lda():
-    query = pd.read_sql_query('SELECT * FROM Numeric_Dataset_Lineups', conn)
+    query = pd.read_sql_query('SELECT * FROM Numeric_Dataset_Lineups', Database.conn)
     name = pd.read_sql_query('SELECT LineupsTraditionalStats_GROUP_NAME, '
                              'LineupsTraditionalStats_GROUP_ID, LineupsTraditionalStats_Season FROM '
-                             'NonNumeric_Dataset_Lineups', conn)
+                             'NonNumeric_Dataset_Lineups', Database.conn)
     query['Score'] = (query['LineupsTraditionalStats_PLUS_MINUS'] * query['LineupsTraditionalStats_GP']) / query[
         'LineupsTraditionalStats_MIN']
     l = []
@@ -226,10 +222,11 @@ def get_lda():
     LDA_components.insert(1, 'Ids', name['LineupsTraditionalStats_GROUP_ID'])
     LDA_components.insert(2, 'Season', name['LineupsTraditionalStats_Season'])
     LDA_components['Class'] = l
-    fig = px.scatter_3d(LDA_components, x=0, y=1, z=2, hover_name='Names', color='Class', opacity=0.5, size='Size')
+    LDA_components['Size'] = 0.25
+    fig = px.scatter_3d(LDA_components, x='LDA1', y='LDA2', z='LDA3', hover_name='Names', color='Class', opacity=0.5, size='Size')
     html_name = str(datetime.datetime.now()).replace(" ", "").replace("-", "").replace(":", "")[:12] + '_3D_LDA'
     plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
-    LDA_components.to_sql('LDA_Dataset_Lineups', conn, if_exists='replace', index=False)
+    LDA_components.to_sql('LDA_Dataset_Lineups', Database.conn, if_exists='replace', index=False)
     print('LDA_Dataset_Lineups Created')
 
 
@@ -239,15 +236,15 @@ def converttuple(tup):
 
 
 def get_players_type(player_id, season):
-    conn.row_factory = lambda cursor, row: row[0]
-    type = c.execute(
+    Database.conn.row_factory = lambda cursor, row: row[0]
+    type = Database.c.execute(
         'SELECT Type FROM PCA_Dataset_Players WHERE PlayersBios_Player_ID = "' + player_id + '" and PlayersBios_Season = "' + season + '"').fetchall()
     return converttuple(type[0])
 
 
 def sql_query_to_list(query):
-    conn.row_factory = sqlite3.Row
-    list_of_tuple = c.execute(query).fetchall()
+    Database.conn.row_factory = Database.sqlite3.Row
+    list_of_tuple = Database.c.execute(query).fetchall()
     li = []
     for i in list_of_tuple:
         li.append(i[0])
@@ -279,9 +276,12 @@ def listtostring(s):
 
 
 def get_lda_bests_lineups():
-    df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite", "High average")', conn)
-    conn.row_factory = lambda cursor, row: row[0]
-    players_type = c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type')
+    df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite", "High average")', Database.conn)
+    players_type = Database.c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type').fetchall()
+    j = 0
+    for i in players_type:
+        players_type[j] = i[0]
+        j += 1
     li = df['Ids'].to_list()
     ye = df['Season'].to_list()
     l = []
@@ -292,7 +292,7 @@ def get_lda_bests_lineups():
     lineups[['P1', 'P2', 'P3', 'P4', 'P5']] = lineups.Lineup.str.split(", ", expand=True)
     lineups['Lineup Type'] = None
     for p in players_type:
-        lineups['Type ' + str(p[0])] = 0
+        lineups['Type ' + str(p)] = 0
     col = list(lineups)[2:7]
     for index, row in lineups.iterrows():
         append_p_type = []
@@ -308,7 +308,7 @@ def get_lda_bests_lineups():
     lineups_count = lineups.iloc[:, 7:15].groupby(lineups.iloc[:, 7:15].columns.tolist()).size().reset_index(
         name='Count')
     lineups_count.sort_values(by=['Count'], ascending=False, inplace=True)
-    lineups_count.to_sql('Bests_Lineups_count', conn, if_exists='replace', index=False)
+    lineups_count.to_sql('Bests_Lineups_count', Database.conn, if_exists='replace', index=False)
     print('The bests lineups have been created')
 
 
@@ -316,8 +316,8 @@ def get_players_with_type():
     df = pd.read_sql_query('SELECT P.PlayersBios_PLAYER_NAME, P.PlayersBios_PLAYER_ID, P.PlayersBios_Season, P.Type, '
                            'CAST(NP.PlayersBios_TEAM_ID as INT) as Team_ID FROM PCA_Dataset_Players P JOIN '
                            'NonNumeric_Dataset_Players NP on P.PlayersBios_PLAYER_ID = NP.PlayersBios_PLAYER_ID WHERE '
-                           'P.PlayersBios_Season = "2020-21" and NP.PlayersBios_Season = "2020-21"', conn)
-    df.to_sql('Players_with_type', conn, if_exists='replace', index=False)
+                           'P.PlayersBios_Season = "2020-21" and NP.PlayersBios_Season = "2020-21"', Database.conn)
+    df.to_sql('Players_with_type', Database.conn, if_exists='replace', index=False)
 
 
 def get_distinct_list(li):
@@ -338,7 +338,7 @@ def get_teams_lineups():
                                   'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
                                   '"Regular Season"')
     for i in team_list:
-        df = pd.read_sql_query('SELECT * FROM Players_with_type WHERE Team_ID = "' + str(i) + '"', conn)
+        df = pd.read_sql_query('SELECT * FROM Players_with_type WHERE Team_ID = "' + str(i) + '"', Database.conn)
         players_id = df['PlayersBios_PLAYER_ID'].to_list()
         players_name = df['PlayersBios_PLAYER_NAME'].to_list()
         lineups_id = combinliste(players_id, 5)
@@ -361,7 +361,7 @@ def get_teams_lineups():
         team_lineups['LineupType'] = lineuptype
         team_lineups['LineupType'] = team_lineups['LineupType'].str.join(', ')
         team_lineups['Team'] = i
-        team_lineups.to_sql('Team_Lineups', conn, if_exists='append', index=False)
+        team_lineups.to_sql('Team_Lineups', Database.conn, if_exists='append', index=False)
     print('All the teams lineups have been inserted')
 
 
@@ -474,7 +474,7 @@ def optimization_lineup_by_team(team_id):
     bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
     for k in range(len(bests_lineups)):
         bests_lineups[k] = bests_lineups[k].split(', ')
-    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', conn)
+    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', Database.conn)
     combi = df['LineupType'].to_list()
     for k in range(len(combi)):
         combi[k] = combi[k].split(', ')
@@ -494,7 +494,7 @@ def optimization_lineup_by_team(team_id):
                     if len(l_id) < 1:
                         break
                     for o in l_id:
-                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
+                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), Database.conn)])
                     lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
                     lineup_df.sort_values(['+/-'], ascending=False, inplace=True)
                     id_to_name = lineup_df['Lineup'].iloc[0]
@@ -504,7 +504,7 @@ def optimization_lineup_by_team(team_id):
                     data_to_insert.sort_values(['Min'], inplace=True)
                     bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
                     for p in bs[0]:
-                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), conn)])
+                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), Database.conn)])
                     df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
                     check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
                     check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
@@ -529,7 +529,7 @@ def optimization_lineup_by_team(team_id):
                         if len(l_id) < 1:
                             break
                         for o in l_id:
-                            lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
+                            lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), Database.conn)])
                         lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
                         lineup_df.sort_values(['+/-'], inplace=True)
                         id_to_name = lineup_df['Lineup'].iloc[0]
@@ -539,7 +539,7 @@ def optimization_lineup_by_team(team_id):
                         data_to_insert.sort_values(['Min'], inplace=True)
                         bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
                         for p in bs[0]:
-                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), conn)])
+                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), Database.conn)])
                         df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
                         check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
                         check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
@@ -552,11 +552,11 @@ def optimization_lineup_by_team(team_id):
                 if done: break
     teams_compare = optimized_stats_team(data_to_insert)
     boxscore_players = get_players_boxscore(boxscore)
-    teams_compare.to_sql('Optimized_teams', conn, if_exists='append', index=False)
+    teams_compare.to_sql('Optimized_teams', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
-    data_to_insert.to_sql('Optimized_lineups', conn, if_exists='append', index=False)
+    data_to_insert.to_sql('Optimized_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
-    boxscore_players.to_sql('Optimized_boxscores_lineups', conn, if_exists='append', index=False)
+    boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 
 
@@ -565,7 +565,7 @@ def optimization_lineup_by_team2(team_id):
     bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
     for k in range(len(bests_lineups)):
         bests_lineups[k] = bests_lineups[k].split(', ')
-    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', conn)
+    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', Database.conn)
     combi = df['LineupType'].to_list()
     for k in range(len(combi)):
         combi[k] = combi[k].split(', ')
@@ -585,7 +585,7 @@ def optimization_lineup_by_team2(team_id):
                     if len(l_id) < 1:
                         break
                     for o in l_id:
-                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), conn)])
+                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), Database.conn)])
                     lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
                     z = 0
                     while z < len(lineup_df):
@@ -600,7 +600,7 @@ def optimization_lineup_by_team2(team_id):
                         data_to_insert.sort_values(['Min'], inplace=True)
                         bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
                         for p in bs[0]:
-                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), conn)])
+                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), Database.conn)])
                         df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
                         check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
                         check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
@@ -625,10 +625,10 @@ def optimization_lineup_by_team2(team_id):
             if done: break
     teams_compare = optimized_stats_team(data_to_insert)
     boxscore_players = get_players_boxscore(boxscore)
-    teams_compare.to_sql('Optimized_teams2', conn, if_exists='append', index=False)
+    teams_compare.to_sql('Optimized_teams', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
-    data_to_insert.to_sql('Optimized_lineups2', conn, if_exists='append', index=False)
+    data_to_insert.to_sql('Optimized_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
-    boxscore_players.to_sql('Optimized_boxscores_lineups2', conn, if_exists='append', index=False)
+    boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 

@@ -5,31 +5,26 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import datetime
-import sqlite3
+import Database
 import numpy as np
-
-
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
-c = conn.cursor()
-conn.commit()
 
 
 def scatter_3d(filename, size_pop, size_centroid, opac):
     if filename == 'Dataset_Players':
-        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, Database.conn)
         df = pd.DataFrame(query)
         col_name = 'PlayersBios_PLAYER_NAME'
         type = 'Type'
     elif filename == 'Dataset_Teams':
-        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, Database.conn)
         df = pd.DataFrame(query)
         col_name = 'TeamsTraditionalStats_TEAM_NAME'
-        type = 'Cluster'
+        type = 'Type'
     elif filename == 'Dataset_Lineups':
-        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM PCA_' + filename, Database.conn)
         df = pd.DataFrame(query)
         col_name = 'LineupsTraditionalStats_GROUP_NAME'
-        type = 'Type'
+        type = 'Cluster'
     df['Size'] = None
     df['Symbol'] = None
     df['Size'].loc[(df[col_name] == 'Centroid')] = size_centroid
@@ -44,11 +39,11 @@ def scatter_3d(filename, size_pop, size_centroid, opac):
     c2.reverse()
     c3.reverse()
     c = c1+c2+c3
-    fig = px.scatter_3d(df.sort_values('Type'),
+    fig = px.scatter_3d(df.sort_values('Cluster'),
                         x='PCA1',
                         y='PCA2',
                         z='PCA3',
-                        color=type,
+                        color='Cluster',
                         color_discrete_sequence=c,
                         symbol='Symbol',
                         hover_name=col_name,
@@ -62,7 +57,7 @@ def plot_histo(filename, type, nb_of_components):
     ks = range(1, nb_of_components)
     inertias = []
     if type == 'exp_var':
-        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         df = pd.DataFrame(query)
         X_std = StandardScaler().fit_transform(df)
         pca = PCA(n_components=nb_of_components)
@@ -76,7 +71,7 @@ def plot_histo(filename, type, nb_of_components):
             labels={"x": "# Components", "y": "Explained Variance"})
         return plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
     elif type == 'nb_clus':
-        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, conn)
+        query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         df = pd.DataFrame(query)
         X_std = StandardScaler().fit_transform(df)
         pca = PCA(n_components=nb_of_components)

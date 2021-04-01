@@ -1,13 +1,10 @@
 import Functions2 as f
-import sqlite3
-import pandas as pd
 import GetNumericData as g
 import GetGraphs as graphs
-import GetDatasets as datasets
 import MergeTables as merge
 
 
-"""f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
+f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerstats', '')  # OK 2
 f.get_players_data('https://stats.nba.com/stats/leagueplayerondetails', '')  # OK 3
 # f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
@@ -35,17 +32,15 @@ f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'DribbleRan
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'TouchTimeRange')  # 9 OK
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamptshot', 'CloseDefDistRange')  # 10 OK
 f.get_teams_data('https://stats.nba.com/stats/leaguedashteamshotlocations', '')  # 11 OK
-f.get_teams_data('https://stats.nba.com/stats/leaguehustlestatsteam', '')  # 12 OK"""
+f.get_teams_data('https://stats.nba.com/stats/leaguehustlestatsteam', '')  # 12 OK
 
-"""merge.merge_tables()"""
+merge.merge_tables()
 
-"""f.clean_dataset('Players')
+f.clean_dataset('Players')
 f.clean_dataset('Teams')
-f.clean_dataset('Lineups')"""
+f.clean_dataset('Lineups')
 
-"""datasets.get_datasets()"""
-
-"""g.get_numeric_data('Dataset_Players')
+g.get_numeric_data('Dataset_Players')
 g.get_numeric_data('Dataset_Teams')
 g.get_numeric_data('Dataset_Lineups')
 
@@ -54,16 +49,17 @@ g.get_non_numeric_data('Dataset_Teams')
 g.get_non_numeric_data('Dataset_Lineups')
 
 g.clean_numeric_dataset('Dataset_Players', 0.8)
+
 g.clean_numeric_dataset('Dataset_Teams', 0.8)
-g.clean_numeric_dataset('Dataset_Lineups', 0.8)"""
+g.clean_numeric_dataset('Dataset_Lineups', 0.8)
 
-"""g.get_pca('Dataset_Players', 30)
+g.get_pca('Dataset_Players', 30)
 g.get_pca('Dataset_Teams', 10)
-g.get_pca('Dataset_Lineups', 15)"""
+g.get_pca('Dataset_Lineups', 15)
 
-"""g.get_lda()"""
+g.get_lda()
 
-"""graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
+graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7)
 graphs.plot_histo('Dataset_Players', 'exp_var', 30)
@@ -71,16 +67,14 @@ graphs.plot_histo('Dataset_Teams', 'exp_var', 30)
 graphs.plot_histo('Dataset_Lineups', 'exp_var', 30)
 graphs.plot_histo('Dataset_Players', 'nb_clus', 30)
 graphs.plot_histo('Dataset_Teams', 'nb_clus', 30)
-graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)"""
+graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)
 
-"""g.get_bests_lineups_detailed()"""
 
-"""g.get_lda_bests_lineups()"""
+g.get_lda_bests_lineups()
 
-"""g.get_players_with_type()"""
+g.get_players_with_type()
 
-"""g.get_teams_lineups()"""
+g.get_teams_lineups()
 
-"""g.optimization_lineup()"""
+g.optimization_lineup()
 
-g.optimization_lineup_by_team2(1610612766)

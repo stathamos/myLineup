@@ -23,9 +23,9 @@ def get_datasets():
     df_teams.to_sql('Dataset_Teams', conn2, if_exists='replace', index=False)
     df_lineups.to_sql('Dataset_Lineups', conn2, if_exists='replace', index=False)
 
-    c2.execute('CREATE INDEX "Index_Dataset_Players" ON "Dataset_Players" ("PlayersBios_PLAYER_ID"	ASC, '
+    Database.c.execute('CREATE INDEX "Index_Dataset_Players" ON "Dataset_Players" ("PlayersBios_PLAYER_ID"	ASC, '
                '"PlayersBios_Season" ASC, "PlayersBios_SeasonType"	ASC);')
-    c2.execute('CREATE INDEX "Index_Dataset_Teams" ON "Dataset_Teams" ("TeamsTraditionalStats_TEAM_ID"	ASC, '
+    Database.c.execute('CREATE INDEX "Index_Dataset_Teams" ON "Dataset_Teams" ("TeamsTraditionalStats_TEAM_ID"	ASC, '
                '"TeamsTraditionalStats_Season" ASC, "TeamsTraditionalStats_SeasonType"	ASC);')
-    c2.execute('CREATE INDEX "Index_Dataset_Lineups" ON "Dataset_Lineups" ("LineupsTraditionalStats_PLAYER_ID"	ASC, '
-               '"LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')
+    Database.c.execute('CREATE INDEX "Index_Dataset_Lineups" ON "Dataset_Lineups" ("LineupsTraditionalStats_PLAYER_ID"	'
+                       'ASC, "LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')

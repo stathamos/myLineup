@@ -1,12 +1,10 @@
-import sqlite3
+import Database
 import pandas as pd
 import Functions2 as f
 
 
 def merge_tables():
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.0.db')  # Connection / Creation of the DataBase
-    c = conn.cursor()
-    update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
+    """update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
                        'Players2ptsDefense_CLOSE_DEF_PLAYER_ID;',
                        'ALTER TABLE Players3ptsDefense RENAME COLUMN '
                        'Players3ptsDefense_CLOSE_DEF_PERSON_ID to '
@@ -20,8 +18,8 @@ def merge_tables():
                        'ALTER TABLE PlayersPaintDefense RENAME COLUMN PlayersPaintDefense_CLOSE_DEF_PERSON_ID to '
                        'PlayersPaintDefense_CLOSE_DEF_PLAYER_ID; ']
     for i in update_col_name:
-        c.execute(i)
-    conn.commit()
+        Database.c.execute(i)
+    Database.conn.commit()"""
 
     i = 0
     list_players = f.sql_column_to_list('player')
@@ -29,7 +27,7 @@ def merge_tables():
     for x in list_players:
         if x == 'PlayersBios':
             print('Step over')
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             columns = [w.replace('PERSON_ID', 'PLAYER_ID') for w in columns]
@@ -40,7 +38,7 @@ def merge_tables():
             i += 1
             print(str(i) + ' / ' + str(len(list_players)))
         else:
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             columns = [w.replace('PERSON_ID', 'PLAYER_ID') for w in columns]
@@ -69,9 +67,12 @@ def merge_tables():
                             + right_index[3]
             i += 1
             print(str(i) + ' / ' + str(len(list_players)))
-    full_query = pd.read_sql_query(full_join, conn)
+    full_query = pd.read_sql_query(full_join, Database.conn)
     df = pd.DataFrame(full_query)
-    df.to_sql('Dataset_Players', conn, if_exists='replace', index=False)
+    df.drop(['PlayersBios_Season', 'PlayersBios_SeasonType'], axis=1, inplace=True)
+    df.insert(1, 'PlayersBios_Season', full_query['PlayersBios_Season'])
+    df.insert(2, 'PlayersBios_SeasonType', full_query['PlayersBios_SeasonType'])
+    df.to_sql('Dataset_Players', Database.conn, if_exists='replace', index=False)
 
     i = 0
     list_teams = f.sql_column_to_list('team')
@@ -79,7 +80,7 @@ def merge_tables():
     for x in list_teams:
         if x == 'TeamsTraditionalStats':
             print('Step over')
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             left_index = [s for s in columns if "TEAM_ID" in s]
@@ -88,7 +89,7 @@ def merge_tables():
             i += 1
             print(str(i) + ' / ' + str(len(list_teams)))
         else:
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             right_index = [s for s in columns if "TEAM_ID" in s]
@@ -99,9 +100,12 @@ def merge_tables():
                         + right_index[2]
             i += 1
             print(str(i) + ' / ' + str(len(list_teams)))
-    full_query = pd.read_sql_query(full_join, conn)
+    full_query = pd.read_sql_query(full_join, Database.conn)
     df = pd.DataFrame(full_query)
-    df.to_sql('Dataset_Teams', conn, if_exists='append', index=False)
+    df.drop(['TeamsTraditionalStats_Season', 'TeamsTraditionalStats_SeasonType'], axis=1, inplace=True)
+    df.insert(1, 'TeamsTraditionalStats_Season', full_query['TeamsTraditionalStats_Season'])
+    df.insert(2, 'TeamsTraditionalStats_SeasonType', full_query['TeamsTraditionalStats_SeasonType'])
+    df.to_sql('Dataset_Teams', Database.conn, if_exists='replace', index=False)
 
     i = 0
     list_teams = f.sql_column_to_list('Lineup')
@@ -109,7 +113,7 @@ def merge_tables():
     for x in list_teams:
         if x == 'LineupsTraditionalStats':
             print('Step over')
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             left_index = [s for s in columns if "GROUP_ID" in s]
@@ -118,7 +122,7 @@ def merge_tables():
             i += 1
             print(str(i) + ' / ' + str(len(list_teams)))
         else:
-            query = pd.read_sql_query("SELECT * FROM " + x, conn)
+            query = pd.read_sql_query("SELECT * FROM " + x, Database.conn)
             df = pd.DataFrame(query)
             columns = df.columns.to_list()
             right_index = [s for s in columns if "GROUP_ID" in s]
@@ -129,6 +133,9 @@ def merge_tables():
                         + right_index[2]
             i += 1
             print(str(i) + ' / ' + str(len(list_teams)))
-    full_query = pd.read_sql_query(full_join, conn)
+    full_query = pd.read_sql_query(full_join, Database.conn)
     df = pd.DataFrame(full_query)
-    df.to_sql('Dataset_Lineups', conn, if_exists='append', index=False)
+    df.drop(['LineupsTraditionalStats_Season', 'LineupsTraditionalStats_SeasonType'], axis=1, inplace=True)
+    df.insert(1, 'LineupsTraditionalStats_Season', full_query['LineupsTraditionalStats_Season'])
+    df.insert(2, 'LineupsTraditionalStats_SeasonType', full_query['LineupsTraditionalStats_SeasonType'])
+    df.to_sql('Dataset_Lineups', Database.conn, if_exists='replace', index=False)
