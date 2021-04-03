@@ -320,6 +320,20 @@ def get_players_with_type():
     df.to_sql('Players_with_type', Database.conn, if_exists='replace', index=False)
 
 
+def get_type_description():
+    df = pd.read_sql_query('SELECT P.PlayersBios_PLAYER_NAME, P.PlayersBios_PLAYER_ID, P.PlayersBios_Season, P.Type, '
+                           'CAST(NP.PlayersBios_TEAM_ID as INT) as Team_ID FROM PCA_Dataset_Players P JOIN '
+                           'NonNumeric_Dataset_Players NP on P.PlayersBios_PLAYER_ID = NP.PlayersBios_PLAYER_ID WHERE '
+                           'P.PlayersBios_Season = NP.PlayersBios_Season', Database.conn)
+    df_description = pd.read_csv('../DB 100h Proj/PlayersType2.csv', sep=";")
+    df_description.sort_values('Types', inplace=True)
+    df_description = df.merge(df_description, how='inner', on=['PlayersBios_PLAYER_NAME', 'PlayersBios_Season'])
+    df_description.sort_values('Type', inplace=True)
+    df_description.drop(['PlayersBios_PLAYER_NAME', 'PlayersBios_PLAYER_ID', 'Types', 'Team_ID', 'PlayersBios_Season']
+                        , axis=1, inplace=True)
+    df_description.to_sql('Type_description', Database.conn, if_exists='replace', index=False)
+
+
 def get_distinct_list(li):
     for j in range(0, len(li)):
         li[j].sort()

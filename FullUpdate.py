@@ -4,7 +4,7 @@ import GetGraphs as graphs
 import MergeTables as merge
 
 
-f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
+"""f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerstats', '')  # OK 2
 f.get_players_data('https://stats.nba.com/stats/leagueplayerondetails', '')  # OK 3
 # f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
@@ -59,6 +59,7 @@ g.get_pca('Dataset_Lineups', 15)
 
 g.get_lda()
 
+
 graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Lineups', 0.2, 0.8, 0.7)
@@ -76,5 +77,9 @@ g.get_players_with_type()
 
 g.get_teams_lineups()
 
-g.optimization_lineup()
+g.optimization_lineup()"""
+
+"""g.get_type_description()"""
+
+"""graphs.site_scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)"""
 
