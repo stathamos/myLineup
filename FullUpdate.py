@@ -75,9 +75,9 @@ g.get_lda_bests_lineups()
 
 g.get_players_with_type()
 
-g.get_teams_lineups()
+g.get_teams_lineups()"""
 
-g.optimization_lineup()"""
+g.optimization_lineup()
 
 """g.get_type_description()"""
 

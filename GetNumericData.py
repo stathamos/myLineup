@@ -479,103 +479,12 @@ def optimization_lineup():
                                   'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
                                   '"Regular Season"')
     for t in team_list:
-        optimization_lineup_by_team2(t)
+        optimization_lineup_by_team(t)
     print('Teams lineups have been optimized')
 
 
 def optimization_lineup_by_team(team_id):
-    minutes = [13, 12, 11, 7, 5]
-    bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
-    for k in range(len(bests_lineups)):
-        bests_lineups[k] = bests_lineups[k].split(', ')
-    df = pd.read_sql_query('SELECT * FROM Team_Lineups WHERE Team = "' + str(team_id) + '"', Database.conn)
-    combi = df['LineupType'].to_list()
-    for k in range(len(combi)):
-        combi[k] = combi[k].split(', ')
-    for j in range(0, len(combi)):
-        combi[j].sort()
-    data_to_insert = pd.DataFrame()
-    boxscore = pd.DataFrame()
-    for m in minutes:
-        done = False
-        for b in bests_lineups:
-            for c in combi:
-                if b == c:
-                    lineup_df = pd.DataFrame()
-                    l_id = df['LineupID'].loc[(df['LineupType'] ==
-                                               str(c).replace('[', '').replace(']', '').replace("'", ''))]
-                    l_id = l_id.to_list()
-                    if len(l_id) < 1:
-                        break
-                    for o in l_id:
-                        lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), Database.conn)])
-                    lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
-                    lineup_df.sort_values(['+/-'], ascending=False, inplace=True)
-                    id_to_name = lineup_df['Lineup'].iloc[0]
-                    names = df['LineupName'].loc[(df['LineupID'] == id_to_name)].to_string(index=False)
-                    lineup_df.insert(2, 'LineupName', names)
-                    data_to_insert = pd.concat([data_to_insert, lineup_df.nlargest(1, '+/-')])
-                    data_to_insert.sort_values(['Min'], inplace=True)
-                    bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
-                    for p in bs[0]:
-                        boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), Database.conn)])
-                    df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
-                    check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
-                    check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
-                    if not check.loc[(check.Min > 36) | (check.PF > 6) | (check.Count > 4)].empty:
-                        data_to_insert = data_to_insert.iloc[1:]
-                        boxscore = boxscore.loc[(boxscore['Min'] != m)]
-                        ind = m
-                        break
-                    done = True
-                    break
-            if done: break
-    if ind != 6 and len(data_to_insert) < 5:
-        for m in minutes[minutes.index(ind):]:
-            done = False
-            for b in bests_lineups:
-                for c in combi:
-                    if b == c:
-                        lineup_df = pd.DataFrame()
-                        l_id = df['LineupID'].loc[(df['LineupType'] ==
-                                                   str(c).replace('[', '').replace(']', '').replace("'", ''))]
-                        l_id = l_id.to_list()
-                        if len(l_id) < 1:
-                            break
-                        for o in l_id:
-                            lineup_df = pd.concat([lineup_df, pd.read_sql_query(sql.optimize(o, m), Database.conn)])
-                        lineup_df['+/-'] = lineup_df['PTS'] - lineup_df['OPP_PTS']
-                        lineup_df.sort_values(['+/-'], inplace=True)
-                        id_to_name = lineup_df['Lineup'].iloc[0]
-                        names = df['LineupName'].loc[(df['LineupID'] == id_to_name)].to_string(index=False)
-                        lineup_df.insert(2, 'LineupName', names)
-                        data_to_insert = pd.concat([data_to_insert, lineup_df.nlargest(1, '+/-')])
-                        data_to_insert.sort_values(['Min'], inplace=True)
-                        bs = [i.split(', ') for i in data_to_insert['Lineup'].to_list()]
-                        for p in bs[0]:
-                            boxscore = pd.concat([boxscore, pd.read_sql_query(sql.optimize_players_stats(p, m), Database.conn)])
-                        df = df.loc[(df['LineupID'] != data_to_insert['Lineup'].to_list()[0])]
-                        check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
-                        check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
-                        if not check.loc[(check.Min > 38) | (check.PF > 6) | (check.Count > 4)].empty:
-                            data_to_insert = data_to_insert.iloc[1:]
-                            boxscore = boxscore.loc[(boxscore['Min'] != m)]
-                            break
-                        done = True
-                        break
-                if done: break
-    teams_compare = optimized_stats_team(data_to_insert)
-    boxscore_players = get_players_boxscore(boxscore)
-    teams_compare.to_sql('Optimized_teams', Database.conn, if_exists='append', index=False)
-    print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
-    data_to_insert.to_sql('Optimized_lineups', Database.conn, if_exists='append', index=False)
-    print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
-    boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
-    print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
-
-
-def optimization_lineup_by_team2(team_id):
-    minutes = [13, 12, 11, 7, 5]
+    minutes = [12, 11, 10, 9, 6]
     bests_lineups = sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
     for k in range(len(bests_lineups)):
         bests_lineups[k] = bests_lineups[k].split(', ')
@@ -619,7 +528,7 @@ def optimization_lineup_by_team2(team_id):
                         check = boxscore.groupby(['PlayerName'])[["Min", "PF"]].sum()
                         check['Count'] = boxscore.groupby(['PlayerName'])[["PlayerName"]].count()
                         if data_to_insert.iloc[0][0] == 'CHA':
-                            if not check.loc[(check.Min > 37) | (check.PF > 6) | (check.Count > 4)].empty:
+                            if not check.loc[(check.Min > 37) | (check.PF > 4) | (check.Count > 4)].empty:
                                 data_to_insert = data_to_insert.iloc[1:]
                                 lineup_df = lineup_df.iloc[1:]
                                 boxscore = boxscore.loc[(boxscore['Min'] != m)]
@@ -627,7 +536,7 @@ def optimization_lineup_by_team2(team_id):
                                 continue
                             done = True
                             break
-                        elif not check.loc[(check.Min > 37) | (check.PF > 6) | (check.Count > 3)].empty:
+                        elif not check.loc[(check.Min > 37) | (check.PF > 4) | (check.Count > 3)].empty:
                             data_to_insert = data_to_insert.iloc[1:]
                             lineup_df = lineup_df.iloc[1:]
                             boxscore = boxscore.loc[(boxscore['Min'] != m)]
@@ -639,10 +548,10 @@ def optimization_lineup_by_team2(team_id):
             if done: break
     teams_compare = optimized_stats_team(data_to_insert)
     boxscore_players = get_players_boxscore(boxscore)
-    teams_compare.to_sql('Optimized_teams', Database.conn, if_exists='append', index=False)
+    teams_compare.to_sql('Optimized_teams2', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized stats have been inserted')
-    data_to_insert.to_sql('Optimized_lineups', Database.conn, if_exists='append', index=False)
+    data_to_insert.to_sql('Optimized_lineups2', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
-    boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
+    boxscore_players.to_sql('Optimized_boxscores_lineups2', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 
