@@ -14,11 +14,16 @@ def get_table(table_name):
     return df
 
 
+def get_player_picture(id, player_name, player_type):
+    img = open(file='../Players Pictures/' + id + '.png')
+    return st.image(img, caption=player_name + ' : ' + player_type)
+
+
 conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v5.db')  # Connection / Creation of the DataBase
 c = conn.cursor()
 conn.commit()
 
-st.title('myLineup')
+"""st.title('myLineup')
 st.subheader('Optimizing NBA Lineups using unsupervised machine learning')
 st.text('After getting all stats possible on the NBA.com website, my main idea was to create clusters \nof players '
         'based on their statistics using unsupervised machine learning. Then after that, the goal is to\nsee what are '
@@ -39,7 +44,7 @@ df_tables = pd.read_sql_query('SELECT name as "Tables" FROM sqlite_master WHERE 
 list_tables = df_tables['Tables'].to_list()
 table_selection = st.selectbox('Select the table you want to go through : ', list_tables)
 df_tables_selected = get_table(table_selection)
-st.dataframe(data=df_tables_selected)
+st.dataframe(data=df_tables_selected)"""
 
 st.text('My first idea was to find clusters in players types. With all of these informations, can we define and\n'
         'group players based on their statistics?\n'
@@ -61,7 +66,7 @@ st.text('My first idea was to find clusters in players types. With all of these 
 df_pca = pd.read_sql_query('select PlayersBios_PLAYER_NAME, Playersbios_player_id, PlayersBios_Season, PCA1, PCA2, '
                            'PCA3, T."Type name", P.Type as Cluster, CASE WHEN PlayersBios_PLAYER_NAME = "Centroid" '
                            'THEN "Centroid" ELSE T."Type name" END as "Player type" from "PCA_Dataset_Players" P '
-                           'JOIN Type_description T on T.Type = P.Type', conn)
+                           'LEFT JOIN Type_description T on T.Type = P.Type', conn)
 
 c1 = px.colors.sequential.Viridis
 c2 = px.colors.sequential.Plasma
@@ -72,11 +77,25 @@ c = c1 + c2 + c3
 c[20] = '#EF553B'
 list_player = df_pca['PlayersBios_PLAYER_NAME'].to_list()
 list_player = list(set(list_player))
-pca_players = st.multiselect('Multiselect', list_player)
-df_pca['Size'] = 0
-for p in pca_players:
-    df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 0.8
-    df_pca['Type name'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 'Selected player'
+df_pca['Hover'] = df_pca['PlayersBios_PLAYER_NAME'] + ' - ' + df_pca['PlayersBios_Season']
+pca_players = st.multiselect('Select a specific player and see his evolution through the years', list_player)
+if not pca_players:
+    df_pca['Size'] = 0
+    df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.2
+    df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid')] = 0.8
+elif pca_players[0] is None:
+    df_pca['Size'] = 0
+    df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.2
+    df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid')] = 0.8
+else:
+    df_pca['Size'] = 0
+    for p in pca_players:
+        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 0.8
+        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != p)] = 0.2
+        df_pca['Cluster'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = '7 - 0'
+        df_pca['Player type'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 'Selected player'
+        index_names = df_pca[df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid'].index
+        df_pca.drop(index_names, inplace=True)
 
 fig_pca = px.scatter_3d(df_pca.sort_values('Cluster'),
                         x='PCA1',
@@ -84,11 +103,56 @@ fig_pca = px.scatter_3d(df_pca.sort_values('Cluster'),
                         z='PCA3',
                         color='Player type',
                         color_discrete_sequence=c,
-                        # symbol='Symbol',
-                        hover_name='PlayersBios_PLAYER_NAME',
-                        opacity=0.7,
+                        hover_name='Hover',
+                        opacity=0.9,
                         size='Size')
 st.write(fig_pca)
+
+st.text("The next step in my analysis is to look for specifics on each type of player. By doing this I will be \n"
+        "able to identify what field each type of player is good at / bad at. Whether for the player's coach or \n"
+        "for the opposing coach, this information is very interesting because it allows: either to put his player \n"
+        "in the best possible attack / defense position, or to prevent an opponent from getting into a comfort\n "
+        "zone.\n\n"
+        "For each type of player I summerized briefly what are his strength, and put it into this little tool :\n")
+
+characteristic_selection = st.selectbox('Do you want to search a player or a type of player ?'
+                                        , ['Player', 'Type of player'])
+
+if characteristic_selection == 'Player':
+    df_characteristic = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME as Name, PlayersBios_PLAYER_ID as Player_ID, '
+                                          'P.Type, "Type name" as Type_name, Characteristics FROM Players_with_type P '
+                                          'JOIN Type_description T on T.Type = P.Type', conn)
+    list_player_current_season = df_characteristic['Name'].to_list()
+    characteristic_player_selection = st.selectbox('Select the player you and see his characteristics : '
+                                                   , list_player_current_season)
+    player_id = df_characteristic.loc[df_characteristic['Name'] ==
+                                      characteristic_player_selection].Player_ID.values[0]
+    type_name = df_characteristic.loc[df_characteristic['Name'] ==
+                                      characteristic_player_selection].Type_name.values[0]
+    characteristic = df_characteristic.loc[df_characteristic['Name'] ==
+                                           characteristic_player_selection].Characteristics.values[0]
+    img, graph = st.beta_columns(2)
+
+    with img:
+        st.subheader(characteristic_player_selection)
+        st.image('../Players Pictures/' + player_id + '.png', caption=characteristic_player_selection
+                                                                      + ' : ' + type_name)
+        st.write(characteristic)
+    with graph:
+        df_top_guard = pd.read_sql_query('select CASE WHEN T.Type = "1 - 0" THEN "Top guards" ELSE "Other" END as Type,'
+                               '"PlayersShot7DribbleRange_FGM" from "PlayersShot7DribbleRange" P LEFT JOIN '
+                               '"Players_with_type" T on P."PlayersShot7DribbleRange_PLAYER_ID" = '
+                               'T.PlayersBios_PLAYER_ID WHERE PlayersShot7DribbleRange_Season = "2020-21" AND '
+                               'PlayersShot7DribbleRange_SeasonType = "Regular Season"', conn)
+
+        dft = df_top_guard['PlayersShot7DribbleRange_FGM'].loc[df_top_guard['Type'] == 'Top guards']
+        dfo = df_top_guard['PlayersShot7DribbleRange_FGM'].loc[df_top_guard['Type'] == 'Other']
+        a = [dft.to_numpy(), dfo.to_numpy()]
+        li = ['Top guards', 'Other']
+        fig6 = ff.create_distplot(a, group_labels=li, curve_type='normal')
+        fig6.update_xaxes(title_text='Number of basket scored after 7 or more dribbles')
+        fig6.update_yaxes(title_text='Density')
+        st.write(fig6)
 
 st.subheader('II.    Optimizing Team lineups.')
 
@@ -177,8 +241,6 @@ dfo = df['PlayersShot7DribbleRange_FGM'].loc[df['Type'] == 'Other']
 a = [dft.to_numpy(), dfo.to_numpy()]
 li = ['Top guards', 'Other']
 fig6 = ff.create_distplot(a, group_labels=li, curve_type='normal')
-
-
 st.write(fig6)
 
 df2 = pd.read_sql_query('select CASE WHEN T.Type = "1 - 1" THEN "TraditionalPointGuards" ELSE "Other" END as Type,'
