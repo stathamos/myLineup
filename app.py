@@ -7,11 +7,19 @@ import plotly.graph_objects as go
 import plotly.figure_factory as ff
 import sqlite3
 import app_sql
+import random
 
 
 def get_table(table_name):
     df = pd.read_sql_query('SELECT * FROM ' + table_name, conn)
     return df
+
+
+def sort_list(li):
+    if li[1] == 'Other players':
+        li[1] = li[0]
+        li[0] = 'Other players'
+    return li
 
 
 def get_player_picture(id, player_name, player_type):
@@ -119,9 +127,11 @@ characteristic_selection = st.selectbox('Do you want to search a player or a typ
                                         , ['Player', 'Type of player'])
 
 if characteristic_selection == 'Player':
-    df_characteristic = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME as Name, PlayersBios_PLAYER_ID as Player_ID, '
-                                          'P.Type, "Type name" as Type_name, Characteristics FROM Players_with_type P '
-                                          'JOIN Type_description T on T.Type = P.Type', conn)
+    df_characteristic = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME as Name, PlayersBios_PLAYER_ID as Player_ID,'
+                                          'P.Type, "Type name" as Type_name, Characteristics, Query, Title '
+                                          'FROM Players_with_type P '
+                                          'JOIN Type_description T on T.Type = P.Type '
+                                          'LEFT JOIN Query Q on Q.Type = T.Type', conn)
     list_player_current_season = df_characteristic['Name'].to_list()
     characteristic_player_selection = st.selectbox('Select the player you and see his characteristics : '
                                                    , list_player_current_season)
@@ -131,6 +141,9 @@ if characteristic_selection == 'Player':
                                       characteristic_player_selection].Type_name.values[0]
     characteristic = df_characteristic.loc[df_characteristic['Name'] ==
                                            characteristic_player_selection].Characteristics.values[0]
+    query = df_characteristic.loc[df_characteristic['Name'] == characteristic_player_selection].Query.values[0]
+    title = df_characteristic.loc[df_characteristic['Name'] == characteristic_player_selection].Title.values[0]
+
     img, graph = st.beta_columns(2)
 
     with img:
@@ -139,20 +152,57 @@ if characteristic_selection == 'Player':
                                                                       + ' : ' + type_name)
         st.write(characteristic)
     with graph:
-        df_top_guard = pd.read_sql_query('select CASE WHEN T.Type = "1 - 0" THEN "Top guards" ELSE "Other" END as Type,'
-                               '"PlayersShot7DribbleRange_FGM" from "PlayersShot7DribbleRange" P LEFT JOIN '
-                               '"Players_with_type" T on P."PlayersShot7DribbleRange_PLAYER_ID" = '
-                               'T.PlayersBios_PLAYER_ID WHERE PlayersShot7DribbleRange_Season = "2020-21" AND '
-                               'PlayersShot7DribbleRange_SeasonType = "Regular Season"', conn)
-
-        dft = df_top_guard['PlayersShot7DribbleRange_FGM'].loc[df_top_guard['Type'] == 'Top guards']
-        dfo = df_top_guard['PlayersShot7DribbleRange_FGM'].loc[df_top_guard['Type'] == 'Other']
+        df_graph = pd.read_sql_query(query, conn)
+        li = df_graph.Type.unique().tolist()
+        sort_list(li)
+        dft = df_graph.iloc[:, 1].loc[df_graph['Type'] == li[0]]
+        dfo = df_graph.iloc[:, 1].loc[df_graph['Type'] == li[1]]
         a = [dft.to_numpy(), dfo.to_numpy()]
-        li = ['Top guards', 'Other']
-        fig6 = ff.create_distplot(a, group_labels=li, curve_type='normal')
-        fig6.update_xaxes(title_text='Number of basket scored after 7 or more dribbles')
-        fig6.update_yaxes(title_text='Density')
-        st.write(fig6)
+        fig = ff.create_distplot(a, group_labels=li, curve_type='normal')
+        fig.update_xaxes(title_text=title)
+        fig.update_yaxes(title_text='Density')
+        st.write(fig)
+
+elif characteristic_selection == 'Type of player':
+    df_type = pd.read_sql_query('select "Type name" as Type_name, Type from Type_description', conn)
+    df_characteristic = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME as Name, PlayersBios_PLAYER_ID as Player_ID,'
+                                          'P.Type, "Type name" as Type_name, Characteristics, Query, Title '
+                                          'FROM Players_with_type P '
+                                          'JOIN Type_description T on T.Type = P.Type '
+                                          'LEFT JOIN Query Q on Q.Type = T.Type', conn)
+    list_type = df_type['Type_name'].to_list()
+    type_selection = st.selectbox('Select the type of player you want to see and \n'
+                                  'his characteristics : ', list_type)
+    df_characteristic = df_characteristic.loc[df_characteristic['Type_name'] == type_selection]
+    list_player_current_season = df_characteristic['Name'].to_list()
+    characteristic_player_selection = random.choice(list_player_current_season)
+    player_id = df_characteristic.loc[df_characteristic['Name'] ==
+                                      characteristic_player_selection].Player_ID.values[0]
+    type_name = df_characteristic.loc[df_characteristic['Name'] ==
+                                      characteristic_player_selection].Type_name.values[0]
+    characteristic = df_characteristic.loc[df_characteristic['Name'] ==
+                                           characteristic_player_selection].Characteristics.values[0]
+    query = df_characteristic.loc[df_characteristic['Name'] == characteristic_player_selection].Query.values[0]
+    title = df_characteristic.loc[df_characteristic['Name'] == characteristic_player_selection].Title.values[0]
+
+    img, graph = st.beta_columns(2)
+
+    with img:
+        st.subheader(characteristic_player_selection)
+        st.image('../Players Pictures/' + player_id + '.png', caption=characteristic_player_selection
+                                                                      + ' : ' + type_name)
+        st.write(characteristic)
+    with graph:
+        df_graph = pd.read_sql_query(query, conn)
+        li = df_graph.Type.unique().tolist()
+        sort_list(li)
+        dft = df_graph.iloc[:, 1].loc[df_graph['Type'] == li[0]]
+        dfo = df_graph.iloc[:, 1].loc[df_graph['Type'] == li[1]]
+        a = [dft.to_numpy(), dfo.to_numpy()]
+        fig = ff.create_distplot(a, group_labels=li, curve_type='normal')
+        fig.update_xaxes(title_text=title)
+        fig.update_yaxes(title_text='Density')
+        st.write(fig)
 
 st.subheader('II.    Optimizing Team lineups.')
 
@@ -165,12 +215,12 @@ team_selected = st.selectbox('Choose one team :', team_list)
 team_id_selected = df_team.loc[df_team['Team'] == team_selected].Team_ID.values[0]
 
 df_current_roster_stats = pd.read_sql_query('SELECT PlayersGeneralStats_PLAYER_NAME, PlayersGeneralStats_GP, '
-                                         'PlayersGeneralStats_MIN, PlayersGeneralStats_REB, PlayersGeneralStats_AST, '
-                                         'PlayersGeneralStats_PTS, PlayersGeneralStats_TOV, PlayersGeneralStats_STL, '
-                                         'PlayersGeneralStats_BLK, PlayersGeneralStats_PF FROM "PlayersGeneralStats" '
-                                         'WHERE PlayersGeneralStats_Season = "2020-21" and '
-                                         'PlayersGeneralStats_SeasonType = "Regular Season" and '
-                                         'PlayersGeneralStats_TEAM_ID = ' + str(team_id_selected), conn)
+                                            'PlayersGeneralStats_MIN, PlayersGeneralStats_REB, PlayersGeneralStats_AST, '
+                                            'PlayersGeneralStats_PTS, PlayersGeneralStats_TOV, PlayersGeneralStats_STL, '
+                                            'PlayersGeneralStats_BLK, PlayersGeneralStats_PF FROM "PlayersGeneralStats" '
+                                            'WHERE PlayersGeneralStats_Season = "2020-21" and '
+                                            'PlayersGeneralStats_SeasonType = "Regular Season" and '
+                                            'PlayersGeneralStats_TEAM_ID = ' + str(team_id_selected), conn)
 
 st.dataframe(data=df_current_roster_stats.round(2))
 
@@ -204,8 +254,8 @@ df_optimized_roster_stats = pd.read_sql_query('select T.Team_Name, T.Team_ID, "2
                                               'O.PTS as "Average PTS Scored", O.OPP_PTS as "Average PTS Opponent '
                                               'Scored", "' + team_selected + '" as "Identifier" from '
                                                                              '"Optimized_teams" O '
-                                              'JOIN Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
-                                              'O.PlayersBios_TEAM_ABBREVIATION WHERE T.Team_ID = '
+                                                                             'JOIN Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
+                                                                             'O.PlayersBios_TEAM_ABBREVIATION WHERE T.Team_ID = '
                                               + str(team_id_selected), conn)
 df_optimized_roster_stats['Hover'] = df_optimized_roster_stats['Team_Name'] + df_optimized_roster_stats['Season']
 
@@ -220,21 +270,20 @@ fig2 = px.scatter(df_team_scatter.sort_values('Cluster')
 
 st.write(fig2)
 
-
 df_optimized_roster_stats = pd.read_sql_query('select O.PlayerName, O.Min, O.PTS, O.FGM, O.FGA, O.FG_PCT, O.FG3M, '
                                               'O.FG3A, O.FG3_PCT, O.FTM, O.FTA, O.FT_PCT, O.REB, O.AST, O.TOV, O.STL, '
                                               'O.BLK, O.PF from "Optimized_boxscores_lineups2" O JOIN '
                                               'Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
                                               'O.PlayersBios_TEAM_ABBREVIATION WHERE T."Team_ID" = ' + str(
-                                               team_id_selected), conn)
+    team_id_selected), conn)
 
 st.dataframe(data=df_optimized_roster_stats.round(2))
 
 df = pd.read_sql_query('select CASE WHEN T.Type = "1 - 0" THEN "Top guards" ELSE "Other" END as Type, '
-                                  '"PlayersShot7DribbleRange_FGM" from "PlayersShot7DribbleRange" P LEFT JOIN '
-                                  '"Players_with_type" T on P."PlayersShot7DribbleRange_PLAYER_ID" = '
-                                  'T.PlayersBios_PLAYER_ID WHERE PlayersShot7DribbleRange_Season = "2020-21" AND '
-                                  'PlayersShot7DribbleRange_SeasonType = "Regular Season"', conn)
+                       '"PlayersShot7DribbleRange_FGM" from "PlayersShot7DribbleRange" P LEFT JOIN '
+                       '"Players_with_type" T on P."PlayersShot7DribbleRange_PLAYER_ID" = '
+                       'T.PlayersBios_PLAYER_ID WHERE PlayersShot7DribbleRange_Season = "2020-21" AND '
+                       'PlayersShot7DribbleRange_SeasonType = "Regular Season"', conn)
 
 dft = df['PlayersShot7DribbleRange_FGM'].loc[df['Type'] == 'Top guards']
 dfo = df['PlayersShot7DribbleRange_FGM'].loc[df['Type'] == 'Other']
@@ -244,16 +293,15 @@ fig6 = ff.create_distplot(a, group_labels=li, curve_type='normal')
 st.write(fig6)
 
 df2 = pd.read_sql_query('select CASE WHEN T.Type = "1 - 1" THEN "TraditionalPointGuards" ELSE "Other" END as Type,'
-                                  '"PlayersGeneralStats_AST" from "PlayersGeneralStats" P LEFT JOIN '
-                                  '"Players_with_type" T on P."PlayersGeneralStats_PLAYER_ID" = '
-                                  'T.PlayersBios_PLAYER_ID WHERE PlayersGeneralStats_Season = "2020-21" AND '
-                                  'PlayersGeneralStats_SeasonType = "Regular Season"', conn)
+                        '"PlayersGeneralStats_AST" from "PlayersGeneralStats" P LEFT JOIN '
+                        '"Players_with_type" T on P."PlayersGeneralStats_PLAYER_ID" = '
+                        'T.PlayersBios_PLAYER_ID WHERE PlayersGeneralStats_Season = "2020-21" AND '
+                        'PlayersGeneralStats_SeasonType = "Regular Season"', conn)
 
 dft2 = df2['PlayersGeneralStats_AST'].loc[df2['Type'] == 'TraditionalPointGuards']
 dfo2 = df2['PlayersGeneralStats_AST'].loc[df2['Type'] == 'Other']
 b = [dft2.to_numpy(), dfo2.to_numpy()]
 li2 = ['TraditionalPointGuards', 'Other']
 fig7 = ff.create_distplot(b, group_labels=li2, curve_type='normal')
-
 
 st.write(fig7)
