@@ -31,7 +31,7 @@ conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v5.db')  # Connection / Creation 
 c = conn.cursor()
 conn.commit()
 
-"""st.title('myLineup')
+st.title('myLineup')
 st.subheader('Optimizing NBA Lineups using unsupervised machine learning')
 st.text('After getting all stats possible on the NBA.com website, my main idea was to create clusters \nof players '
         'based on their statistics using unsupervised machine learning. Then after that, the goal is to\nsee what are '
@@ -52,7 +52,7 @@ df_tables = pd.read_sql_query('SELECT name as "Tables" FROM sqlite_master WHERE 
 list_tables = df_tables['Tables'].to_list()
 table_selection = st.selectbox('Select the table you want to go through : ', list_tables)
 df_tables_selected = get_table(table_selection)
-st.dataframe(data=df_tables_selected)"""
+st.dataframe(data=df_tables_selected)
 
 st.text('My first idea was to find clusters in players types. With all of these informations, can we define and\n'
         'group players based on their statistics?\n'
@@ -206,6 +206,32 @@ elif characteristic_selection == 'Type of player':
 
 st.subheader('II.    Optimizing Team lineups.')
 
+st.text('Based on the information we have now, my idea was to use the players type found\n'
+        'in order to see what are the bests lineups possible.\n'
+        'In the table "LineupTraditionalStats we have a variable called "+/-" which gives\n'
+        'us the differential of this lineup when they are on the floor.\n\n'
+        'I divided the lineup type into 4 types based on this column : \n'
+        '   - Elite lineup (> 2 +/-)\n'
+        '   - Above average (> 0 +/-)\n'
+        '   - Below average (< 0 +/-)\n'
+        '   - Bad average (< 2 +/-)\n'
+        'The next step was to check every "Elite" and "Above average" lineups to see what\n'
+        'type of player it composes it. My idea was to see if a pattern appears in order\n'
+        'to use it to create the bests lineups for each team.\n'
+        'At first, I tried to find patterns with the 20 types of players but there were\n'
+        'no evident pattern. So I chose the firsts 7 clusters I found and now I have some\n'
+        'interesting patterns. \n\n'
+        'After that, I could write my algorithm following some simple rules :\n'
+        '   - Select a team\n'
+        '   - See every combination possible\n'
+        '   - See what types of players it composes it\n'
+        '   - Iterate over the bests patterns and lineups possible\n'
+        'And of course, every final lineups must respect some rules too : \n'
+        '   - No more than 36min per player\n'
+        '   - No more than 4 fouls per player\n'
+        '   - No more than 3 lineups per player\n\n'
+        'Some results are really interesting because the lineups have never been used in real life.')
+
 df_team = pd.read_sql_query('select TeamsTraditionalStats_TEAM_ID as Team_ID, TeamsTraditionalStats_TEAM_NAME as Team '
                             'from "TeamsTraditionalStats" WHERE TeamsTraditionalStats_Season = "2020-21" and '
                             'TeamsTraditionalStats_SeasonType = "Regular Season"', conn)
@@ -221,6 +247,9 @@ df_current_roster_stats = pd.read_sql_query('SELECT PlayersGeneralStats_PLAYER_N
                                             'WHERE PlayersGeneralStats_Season = "2020-21" and '
                                             'PlayersGeneralStats_SeasonType = "Regular Season" and '
                                             'PlayersGeneralStats_TEAM_ID = ' + str(team_id_selected), conn)
+
+st.text('Here is the real "boxscore" of the team selected. You can go through\n'
+         'the statistics of every player on the team.')
 
 st.dataframe(data=df_current_roster_stats.round(2))
 
@@ -239,14 +268,20 @@ df_team_scatter['Identifier'] = 0
 df_team_scatter['Identifier'].loc[(df_team_scatter['Teams_ID'] == team_id_selected) & (df_team_scatter['Season'] ==
                                                                                        '2020-21')] = team_selected
 df_team_scatter['Identifier'].loc[(df_team_scatter['Identifier'] == 0)] = 'Other'
-df_team_scatter['Hover'] = df_team_scatter['Teams'] + df_team_scatter['Season']
+df_team_scatter['Hover'] = df_team_scatter['Teams'] + ' - ' + df_team_scatter['Season']
 
 fig = px.scatter(df_team_scatter.sort_values('Cluster')
                  , x="Average PTS Scored"
                  , y="Average PTS Opponent Scored"
                  , color="Identifier"
-                 , symbol='Cluster'
                  , hover_name='Hover')
+
+st.text('In order to make it more visual, I plotted a simple graph which \n'
+        'shows the average points scored by the average point the opponent\n'
+        'scored for every team. You can find the selected team with the \n'
+        'red dot.\n\n'
+        'If the dot is located on the bottom right of the graph, it means \n'
+        'that it has a positive "+/-" which is good. \n')
 
 st.write(fig)
 
@@ -257,7 +292,8 @@ df_optimized_roster_stats = pd.read_sql_query('select T.Team_Name, T.Team_ID, "2
                                                                              'JOIN Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
                                                                              'O.PlayersBios_TEAM_ABBREVIATION WHERE T.Team_ID = '
                                               + str(team_id_selected), conn)
-df_optimized_roster_stats['Hover'] = df_optimized_roster_stats['Team_Name'] + df_optimized_roster_stats['Season']
+df_optimized_roster_stats['Hover'] = df_optimized_roster_stats['Team_Name'] + ' - ' \
+                                     + df_optimized_roster_stats['Season']
 
 df_team_scatter = pd.concat([df_team_scatter, df_optimized_roster_stats])
 
@@ -265,8 +301,16 @@ fig2 = px.scatter(df_team_scatter.sort_values('Cluster')
                   , x="Average PTS Scored"
                   , y="Average PTS Opponent Scored"
                   , color="Identifier"
-                  , symbol='Cluster'
                   , hover_name='Hover')
+
+st.text('Then, I launched the optimizer, to seek for the bests possible\n'
+        'lineups. You will see a second red dot on the graph.\n'
+        'If the second dot is either :\n'
+        '   - Lower\n'
+        '   - More to the right\n'
+        'Then I consider the optimizer as a success, because it would have\n'
+        'increase either the offense or the defense of the team (or both).\n'
+        'Here is the new graph and the new statistics of the optimized team.')
 
 st.write(fig2)
 
@@ -274,34 +318,8 @@ df_optimized_roster_stats = pd.read_sql_query('select O.PlayerName, O.Min, O.PTS
                                               'O.FG3A, O.FG3_PCT, O.FTM, O.FTA, O.FT_PCT, O.REB, O.AST, O.TOV, O.STL, '
                                               'O.BLK, O.PF from "Optimized_boxscores_lineups2" O JOIN '
                                               'Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
-                                              'O.PlayersBios_TEAM_ABBREVIATION WHERE T."Team_ID" = ' + str(
-    team_id_selected), conn)
+                                              'O.PlayersBios_TEAM_ABBREVIATION WHERE T."Team_ID" = ' +
+                                              str(team_id_selected), conn)
 
 st.dataframe(data=df_optimized_roster_stats.round(2))
 
-df = pd.read_sql_query('select CASE WHEN T.Type = "1 - 0" THEN "Top guards" ELSE "Other" END as Type, '
-                       '"PlayersShot7DribbleRange_FGM" from "PlayersShot7DribbleRange" P LEFT JOIN '
-                       '"Players_with_type" T on P."PlayersShot7DribbleRange_PLAYER_ID" = '
-                       'T.PlayersBios_PLAYER_ID WHERE PlayersShot7DribbleRange_Season = "2020-21" AND '
-                       'PlayersShot7DribbleRange_SeasonType = "Regular Season"', conn)
-
-dft = df['PlayersShot7DribbleRange_FGM'].loc[df['Type'] == 'Top guards']
-dfo = df['PlayersShot7DribbleRange_FGM'].loc[df['Type'] == 'Other']
-a = [dft.to_numpy(), dfo.to_numpy()]
-li = ['Top guards', 'Other']
-fig6 = ff.create_distplot(a, group_labels=li, curve_type='normal')
-st.write(fig6)
-
-df2 = pd.read_sql_query('select CASE WHEN T.Type = "1 - 1" THEN "TraditionalPointGuards" ELSE "Other" END as Type,'
-                        '"PlayersGeneralStats_AST" from "PlayersGeneralStats" P LEFT JOIN '
-                        '"Players_with_type" T on P."PlayersGeneralStats_PLAYER_ID" = '
-                        'T.PlayersBios_PLAYER_ID WHERE PlayersGeneralStats_Season = "2020-21" AND '
-                        'PlayersGeneralStats_SeasonType = "Regular Season"', conn)
-
-dft2 = df2['PlayersGeneralStats_AST'].loc[df2['Type'] == 'TraditionalPointGuards']
-dfo2 = df2['PlayersGeneralStats_AST'].loc[df2['Type'] == 'Other']
-b = [dft2.to_numpy(), dfo2.to_numpy()]
-li2 = ['TraditionalPointGuards', 'Other']
-fig7 = ff.create_distplot(b, group_labels=li2, curve_type='normal')
-
-st.write(fig7)
