@@ -1,10 +1,12 @@
-import Functions2 as f
+import GetData as f
 import GetNumericData as g
+import Optimize as o
 import GetGraphs as graphs
 import MergeTables as merge
+import PCA_LDA
 
 
-"""f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
+f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerstats', '')  # OK 2
 f.get_players_data('https://stats.nba.com/stats/leagueplayerondetails', '')  # OK 3
 # f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
@@ -49,16 +51,14 @@ g.get_non_numeric_data('Dataset_Teams')
 g.get_non_numeric_data('Dataset_Lineups')
 
 g.clean_numeric_dataset('Dataset_Players', 0.8)
-
 g.clean_numeric_dataset('Dataset_Teams', 0.8)
 g.clean_numeric_dataset('Dataset_Lineups', 0.8)
 
-g.get_pca('Dataset_Players', 30)
-g.get_pca('Dataset_Teams', 10)
-g.get_pca('Dataset_Lineups', 15)
+PCA_LDA.get_pca('Dataset_Players', 30)
+PCA_LDA.get_pca('Dataset_Teams', 10)
+PCA_LDA.get_pca('Dataset_Lineups', 15)
 
-g.get_lda()
-
+PCA_LDA.get_lda()
 
 graphs.scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)
 graphs.scatter_3d('Dataset_Teams', 0.2, 0.8, 0.7)
@@ -70,16 +70,12 @@ graphs.plot_histo('Dataset_Players', 'nb_clus', 30)
 graphs.plot_histo('Dataset_Teams', 'nb_clus', 30)
 graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)
 
-
 g.get_lda_bests_lineups()
 
-g.get_players_with_type()
+o.get_players_with_type()
 
-g.get_teams_lineups()"""
+o.get_teams_lineups()
 
-g.optimization_lineup()
+o.optimization_lineup()
 
-"""g.get_type_description()"""
-
-"""graphs.site_scatter_3d('Dataset_Players', 0.2, 0.8, 0.7)"""
-
+o.get_type_description()

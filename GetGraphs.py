@@ -56,40 +56,6 @@ def scatter_3d(filename, size_pop, size_centroid, opac):
     return plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
 
 
-def site_scatter_3d(filename, Player):
-    query = pd.read_sql_query('SELECT * FROM PCA_' + filename, Database.conn)
-    df = pd.DataFrame(query)
-    df['Hover'] = df["PlayersBios_PLAYER_NAME"] + ' - ' + df["PlayersBios_Season"]
-    col_name = 'PlayersBios_PLAYER_NAME'
-    df['Size'] = None
-    df['Symbol'] = None
-    df['Size'].loc[(df[col_name] == 'Centroid')] = 0.8
-    df['Symbol'].loc[(df[col_name] == 'Centroid')] = 'circle'
-    df['Size'].loc[(df[col_name] != 'Centroid')] = 0.2
-    df['Symbol'].loc[(df[col_name] != 'Centroid')] = 'cross'
-    si = df['Size'].to_list()
-    html_name = 'Find_Player'
-    c1 = px.colors.sequential.Viridis
-    c2 = px.colors.sequential.Plasma
-    c3 = px.colors.sequential.Blues
-    c2.reverse()
-    c3.reverse()
-    c = c1+c2+c3
-    c[21] = '#EF553B'
-    fig = px.scatter_3d(df.sort_values('Type'),
-                        x='PCA1',
-                        y='PCA2',
-                        z='PCA3',
-                        color='Type',
-                        color_discrete_sequence=c,
-                        symbol='Symbol',
-                        hover_name='Hover',
-                        opacity=0.7,
-                        size=si,
-                        title='PCA ' + filename)
-    return plotly.offline.plot(fig, filename='../Graphs/' + html_name + '.html')
-
-
 def plot_histo(filename, type, nb_of_components):
     ks = range(1, nb_of_components)
     inertias = []

@@ -1,10 +1,10 @@
 import Database
 import pandas as pd
-import Functions2 as f
+import Toolbox as tool
 
 
 def merge_tables():
-    """update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
+    update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
                        'Players2ptsDefense_CLOSE_DEF_PLAYER_ID;',
                        'ALTER TABLE Players3ptsDefense RENAME COLUMN '
                        'Players3ptsDefense_CLOSE_DEF_PERSON_ID to '
@@ -19,10 +19,10 @@ def merge_tables():
                        'PlayersPaintDefense_CLOSE_DEF_PLAYER_ID; ']
     for i in update_col_name:
         Database.c.execute(i)
-    Database.conn.commit()"""
+    Database.conn.commit()
 
     i = 0
-    list_players = f.sql_column_to_list('player')
+    list_players = tool.sql_column_to_list('player')
     full_join = 'SELECT * FROM PlayersBios P0'
     for x in list_players:
         if x == 'PlayersBios':
@@ -75,7 +75,7 @@ def merge_tables():
     df.to_sql('Dataset_Players', Database.conn, if_exists='replace', index=False)
 
     i = 0
-    list_teams = f.sql_column_to_list('team')
+    list_teams = tool.sql_column_to_list('team')
     full_join = 'SELECT * FROM TeamsTraditionalStats T0'
     for x in list_teams:
         if x == 'TeamsTraditionalStats':
@@ -108,7 +108,7 @@ def merge_tables():
     df.to_sql('Dataset_Teams', Database.conn, if_exists='replace', index=False)
 
     i = 0
-    list_teams = f.sql_column_to_list('Lineup')
+    list_teams = tool.sql_column_to_list('Lineup')
     full_join = 'SELECT * FROM LineupsTraditionalStats L0'
     for x in list_teams:
         if x == 'LineupsTraditionalStats':

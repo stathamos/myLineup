@@ -1,13 +1,14 @@
 import requests
 from bs4 import BeautifulSoup as bs
-import GetNumericData as g
+import Toolbox as tool
 
 
 def get_htlm(url):
     soup = bs(requests.get(url).content, "html.parser")
     return str(soup)
 
-players_list = g.sql_query_to_list('SELECT PlayersBios_PLAYER_ID FROM Players_with_type')
+
+players_list = tool.sql_query_to_list('SELECT PlayersBios_PLAYER_ID FROM Players_with_type')
 i = 1
 for player_id in players_list:
     soup = get_htlm('https://www.nba.com/stats/player/' + player_id + '/')

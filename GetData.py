@@ -1,36 +1,27 @@
 import requests
-import sqlite3
 import time
 import pandas as pd
 import Database
+import Toolbox as tool
 
 
-def create_index(PlayerOrTeam, Type, TableName):
-    if PlayerOrTeam == 'Player' and Type == 'Offense':
+def create_index(playerorteam, Type, TableName):
+    if playerorteam == 'Player' and Type == 'Offense':
         Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("PLAYER_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
-    elif PlayerOrTeam == 'Player' and Type == 'Defense':
+    elif playerorteam == 'Player' and Type == 'Defense':
         Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("CLOSE_DEF_PERSON_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
-    elif PlayerOrTeam == 'Team' and Type == '':
+    elif playerorteam == 'Team' and Type == '':
         Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("TEAM_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
-    elif PlayerOrTeam == 'Lineups' and Type == '':
+    elif playerorteam == 'Lineups' and Type == '':
         Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("GROUP_ID"	ASC, "Season" ASC, '
                                                                         '"SeasonType"	ASC);')
-
-
-def sql_column_to_list(type):
-    list = Database.c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + type + '%"').fetchall()
-    j = 0
-    for i in list:
-        list[j] = converttuple(i[0])
-        j += 1
-    return list
 
 
 def get_players_data(url, typestat):
@@ -1863,7 +1854,7 @@ def clean_dataset(dataset):
         lst = Database.c.execute('select LineupsTraditionalStats_GROUP_ID from Dataset_Lineups').fetchall()
         j = 0
         for i in lst:
-            lst[j] = converttuple(i[0])
+            lst[j] = tool.converttuple(i[0])
             j += 1
         lst = [e[1:len(e) - 1] for e in lst]
         lst = [w.replace('-', ', ') for w in lst]
@@ -1874,7 +1865,3 @@ def clean_dataset(dataset):
             'ASC, "LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')
         print('Dataset Lineups cleaned')
 
-
-def converttuple(tup):
-    s = ''.join(tup)
-    return s
