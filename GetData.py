@@ -1865,3 +1865,7 @@ def clean_dataset(dataset):
             'ASC, "LineupsTraditionalStats_Season" ASC, "LineupsTraditionalStats_SeasonType"	ASC);')
         print('Dataset Lineups cleaned')
 
+
+def get_team_corres():
+    df = pd.read_csv('../DB 100h Proj/Team_Corres.csv', sep=';')
+    df.to_sql('Team_Correspondence', Database.conn, if_exists='replace', index=False)

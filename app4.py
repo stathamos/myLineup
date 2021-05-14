@@ -6,7 +6,7 @@ import sqlite3
 
 def app():
 
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v5.db')  # Connection / Creation of the DataBase
+    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
     c = conn.cursor()
     conn.commit()
 
@@ -125,7 +125,7 @@ def app():
 
     df_optimized_roster_stats = pd.read_sql_query('select O.PlayerName, O.Min, O.PTS, O.FGM, O.FGA, O.FG_PCT, O.FG3M, '
                                                   'O.FG3A, O.FG3_PCT, O.FTM, O.FTA, O.FT_PCT, O.REB, O.AST, O.TOV, O.STL, '
-                                                  'O.BLK, O.PF from "Optimized_boxscores_lineups2" O JOIN '
+                                                  'O.BLK, O.PF from "Optimized_boxscores_lineups" O JOIN '
                                                   'Team_Correspondence T on T."PlayersBios_TEAM_ABBREVIATION" = '
                                                   'O.PlayersBios_TEAM_ABBREVIATION WHERE T."Team_ID" = ' +
                                                   str(team_id_selected), conn)

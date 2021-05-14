@@ -225,3 +225,4 @@ def optimization_lineup_by_team(team_id):
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized lineups have been inserted')
     boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
+

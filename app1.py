@@ -9,7 +9,7 @@ def app():
         df = pd.read_sql_query('SELECT * FROM ' + table_name, conn)
         return df
 
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v5.db')  # Connection / Creation of the DataBase
+    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
     c = conn.cursor()
     conn.commit()
 

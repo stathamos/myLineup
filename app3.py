@@ -14,7 +14,7 @@ def app():
         return li
 
 
-    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v5.db')  # Connection / Creation of the DataBase
+    conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
     c = conn.cursor()
     conn.commit()
 
@@ -35,7 +35,7 @@ def app():
                                               'P.Type, "Type name" as Type_name, Characteristics, Query, Title '
                                               'FROM Players_with_type P '
                                               'JOIN Type_description T on T.Type = P.Type '
-                                              'LEFT JOIN Query Q on Q.Type = T.Type', conn)
+                                              'LEFT JOIN Query Q on Q.Type = T."Type name"', conn)
         list_player_current_season = df_characteristic['Name'].to_list()
         characteristic_player_selection = st.selectbox('Select the player you and see his characteristics : '
                                                        , list_player_current_season)
@@ -73,7 +73,7 @@ def app():
                                               'P.Type, "Type name" as Type_name, Characteristics, Query, Title '
                                               'FROM Players_with_type P '
                                               'JOIN Type_description T on T.Type = P.Type '
-                                              'LEFT JOIN Query Q on Q.Type = T.Type', conn)
+                                              'LEFT JOIN Query Q on Q.Type = T."Type name"', conn)
         list_type = df_type['Type_name'].to_list()
         type_selection = st.selectbox('Select the type of player you want to see and \n'
                                       'his characteristics : ', list_type)
