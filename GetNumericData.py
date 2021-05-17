@@ -90,7 +90,15 @@ def get_players_type(player_id, season):
     return tool.converttuple(ty[0])
 
 
+def get_simple_player_type():
+    df = pd.read_csv('../DB 100h Proj/PlayersType_simple.csv', sep=";")
+    df.to_sql('Players_type_simple', Database.conn, if_exists='replace', index=False)
+    return df
+
+
+
 def get_lda_bests_lineups():
+    df_simple = get_simple_player_type()
     df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite", "High average")', Database.conn)
     players_type = Database.c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type').fetchall()
     j = 0
@@ -108,19 +116,27 @@ def get_lda_bests_lineups():
     lineups['Lineup Type'] = None
     for p in players_type:
         lineups['Type ' + str(p)] = 0
+    lineups['Lineup Players'] = None
     col = list(lineups)[2:7]
     for index, row in lineups.iterrows():
         append_p_type = []
+        append_p_simple_type = []
         for co in col:
             season = row['Season']
             player_id = row[co]
             p_type = get_players_type(player_id, season)
             append_p_type.append(p_type[0])
             append_p_type.sort()
+            simple_type = df_simple['Type_name'].iloc[int(p_type[0])]
+            append_p_simple_type.append(simple_type)
+            append_p_simple_type.sort()
             lineups['Lineup Type'][index] = str(append_p_type).strip("[]").replace("'", "")
             lineups['Type ' + p_type[0]][index] = lineups['Type ' + p_type[0]][index] + 1
+        simple_type = tool.count_element_list(append_p_simple_type)
+        lineups['Lineup Players'][index] = str(simple_type).strip("[]").replace("'", "")
     lineups['CheckNbPlayer'] = lineups.sum(axis=1)
-    lineups_count = lineups.iloc[:, 7:15].groupby(lineups.iloc[:, 7:15].columns.tolist()).size().reset_index(
+    lineups.drop(columns=['Type 7'], inplace=True)
+    lineups_count = lineups.iloc[:, 7:16].groupby(lineups.iloc[:, 7:16].columns.tolist()).size().reset_index(
         name='Count')
     lineups_count.sort_values(by=['Count'], ascending=False, inplace=True)
     lineups_count.to_sql('Bests_Lineups_count', Database.conn, if_exists='replace', index=False)

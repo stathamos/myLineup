@@ -36,6 +36,21 @@ def sql_query_to_list(query):
     return li
 
 
+def count_element_list(li):
+    li2 = []
+    for i in li:
+        if li.count(i) > 1:
+            li2.append(str(li.count(i)) + ' - ' + i)
+        else:
+            li2.append(i)
+    res = []
+    for j in li2:
+        if j not in res:
+            res.append(j)
+            res.sort()
+    return res
+
+
 def combinliste(seq, k):
     p = []
     i, imax = 0, 2 ** len(seq) - 1

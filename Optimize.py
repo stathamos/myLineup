@@ -27,8 +27,8 @@ def get_type_description():
 
 def get_teams_lineups():
     team_list = tool.sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
-                                       'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
-                                       '"Regular Season"')
+                                       'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType ='
+                                       ' "Regular Season"')
     for i in team_list:
         df = pd.read_sql_query('SELECT * FROM Players_with_type WHERE Team_ID = "' + str(i) + '"', Database.conn)
         players_id = df['PlayersBios_PLAYER_ID'].to_list()
@@ -145,10 +145,11 @@ def optimized_stats_team(data_to_insert):
 
 def optimization_lineup():
     team_list = tool.sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
-                                  'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType = '
-                                  '"Regular Season"')
+                                       'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType ='
+                                       ' "Regular Season"')
     for t in team_list:
         optimization_lineup_by_team(t)
+    add_lineup_players()
     print('Teams lineups have been optimized')
 
 
@@ -226,3 +227,9 @@ def optimization_lineup_by_team(team_id):
     boxscore_players.to_sql('Optimized_boxscores_lineups', Database.conn, if_exists='append', index=False)
     print(str(data_to_insert.iloc[0][0]) + ' - Optimized boxscores have been inserted')
 
+
+def add_lineup_players():
+    lineup_players = pd.read_sql_query('select O.*, B."Lineup Players" from Bests_Lineups_count B '
+                                       'JOIN Team_Lineups T on T.LineupType = B."Lineup Type" '
+                                       'JOIN Optimized_lineups O on O.Lineup = T.LineupID', Database.conn)
+    lineup_players.to_sql('Optimized_lineups', Database.conn, if_exists='replace', index=False)

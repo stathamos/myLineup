@@ -71,7 +71,9 @@ graphs.plot_histo('Dataset_Players', 'nb_clus', 30)
 graphs.plot_histo('Dataset_Teams', 'nb_clus', 30)
 graphs.plot_histo('Dataset_Lineups', 'nb_clus', 30)
 
+
 g.get_lda_bests_lineups()
+
 
 o.get_players_with_type()
 
@@ -81,6 +83,6 @@ o.optimization_lineup()
 
 o.get_type_description()
 
-f.get_team_corres()"""
+f.get_team_corres()
 
-q.get_queries()
+q.get_queries()"""

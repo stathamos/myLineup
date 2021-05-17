@@ -12,32 +12,32 @@ def app():
             li[0] = 'Other players'
         return li
 
-
-
     conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
-    c = conn.cursor()
     conn.commit()
-
-    logo = open(file='../Logo.png')
 
     st.image('../Logo.png')
 
-    st.text('My first idea was to find clusters in players types. With all of these informations, can we define and\n'
-            'group players based on their statistics?\n'
-            'In order to that, I had to link all the tables thanks to three columns which are on every tables :\n'
-            '- Player_ID\n'
-            '- Season\n'
-            '- SeasonType\n'
-            'It allowed me to get a big dataset with every columns per players in it.\n'
-            'To be able to exploit these data, I had to use dimension reduction on the new made dataset\n'
-            'From almost 1000 columns, I could reduce it to 30 columns thanks to Principal Component Analysis\n'
-            'technic and still managed to have 75% of the datas in it.\n\n'
-            'Once I had my numeric dataset, I was able to use K-Means algorithm on it in order to get clusters\n'
-            'on players. I found 7 clusters, but I thought I could be more precise and find more "type of \n'
-            'players". To do that, I used again K-means on each clusters which gave me 3 subcluters per cluster.\n'
-            'In total, 21 clusters have been found. Each clusters has his own specific characteristics which\n'
-            'will be explained later.\n\n'
-            'Here is the result we get when we plot it into the PCA axis. You can try to find some players\n')
+    st.markdown("In order to group players based on their statistics, we had to link all\n"
+                "'Player's' table thanks to three columns we find in every tables :\n"
+                "- Player_ID\n"
+                "- Season\n"
+                "- SeasonType\n\n"
+                "It allowed us to get a big dataset containing every column per players\n"
+                "in it. From more than **1000 columns** we could reduce it to **30 columns**\n"
+                "and still managed to have **75% of the data** thanks to **PCA**.\n"
+                "After getting this numeric dataset, the next step was to use **K-Means algorithm**\n"
+                "to look for similarities between player's statistics.\n"
+                "We found **7 clusters**, each one divided in **3 sub-clusters** which give us a total\n"
+                "of **21 clusters**. Each clusters have specific characteristics which will\n"
+                "be explained in the next part.\n\n"
+                "We decided to plot our result on the **3 PCA axis**. Those axis allows us\n"
+                "to know with which variables the players are linked. Here is a quick recap :\n"
+                "- **PCA1 rewards** players that score a lot of points and play big minutes\n"
+                "   and **penalizes** the opposite\n"
+                "- **PCA2 rewards** players that defend near the rim and **penalizes** \n"
+                "   players that shoot a lot of three points\n"
+                "-  **PCA3 rewards** players that do a lot of dribbles and **penalizes**\n"
+                "   catch and shooters\n")
 
     df_pca = pd.read_sql_query('select PlayersBios_PLAYER_NAME, Playersbios_player_id, PlayersBios_Season, PCA1, PCA2, '
                                'PCA3, T."Type name", P.Type as Cluster, CASE WHEN PlayersBios_PLAYER_NAME = "Centroid" '
@@ -57,19 +57,21 @@ def app():
     pca_players = st.multiselect('Select a specific player and see his evolution through the years', list_player)
     if not pca_players:
         df_pca['Size'] = 0
-        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.2
+        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.1
         df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid')] = 0.8
     elif pca_players[0] is None:
         df_pca['Size'] = 0
-        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.2
+        df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != 'Centroid')] = 0.1
         df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid')] = 0.8
     else:
         df_pca['Size'] = 0
         for p in pca_players:
             df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 0.8
-            df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != p)] = 0.2
+            df_pca['Size'].loc[(df_pca['PlayersBios_PLAYER_NAME'] != p)] = 0.1
             df_pca['Cluster'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = '7 - 0'
-            df_pca['Player type'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = 'Selected player'
+            df_pca['Player type'].loc[(df_pca['PlayersBios_PLAYER_NAME'] == p)] = \
+                'Selected player' + ' - ' + df_pca['Player type'].loc[(df_pca['PlayersBios_PLAYER_NAME'] ==
+                                                                     p)].astype(str)
             index_names = df_pca[df_pca['PlayersBios_PLAYER_NAME'] == 'Centroid'].index
             df_pca.drop(index_names, inplace=True)
 

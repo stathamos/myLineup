@@ -13,19 +13,20 @@ def app():
             li[0] = 'Other players'
         return li
 
-
     conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
-    c = conn.cursor()
     conn.commit()
 
     st.image('../Logo.png')
 
-    st.text("The next step in my analysis is to look for specifics on each type of player. By doing this I will be \n"
-            "able to identify what field each type of player is good at / bad at. Whether for the player's coach or \n"
-            "for the opposing coach, this information is very interesting because it allows: either to put his player \n"
-            "in the best possible attack / defense position, or to prevent an opponent from getting into a comfort\n "
-            "zone.\n\n"
-            "For each type of player I summerized briefly what are his strength, and put it into this little tool :\n")
+    st.markdown("After being able to find clusters in our dataset, we decided to look for\n"
+                "specifics on each type of player. By doing this, we could identify what \n"
+                "field each type of player is **good at / bad at**. Whether for the player's\n"
+                "coach or the opposing coach, this information is very interesting because it\n"
+                "allows:\n"
+                "- either to put his player in the **best attack / defense** position\n"
+                "- or to **prevent** an opponent from getting into a **comfort zone**\n\n"
+                "For every cluster, I summarized briefly what are his strength, and put\n"
+                "it into this tool :\n")
 
     characteristic_selection = st.selectbox('Do you want to search a player or a type of player ?'
                                             , ['Player', 'Type of player'])
