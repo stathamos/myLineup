@@ -119,8 +119,7 @@ def app():
 
     st.write(fig2)
 
-    st.markdown('You will find the **optimized** boxscore with the detailed\n'
-                'lineups and the player it composes it.')
+    st.markdown('You will find the **optimized** boxscore below.')
 
     df_optimized_roster_stats = pd.read_sql_query('select O.PlayerName, O.Min, O.PTS, O.FGM, O.FGA, O.FG_PCT, O.FG3M, '
                                                   'O.FG3A, O.FG3_PCT, O.FTM, O.FTA, O.FT_PCT, O.REB, O.AST, O.TOV, '
@@ -131,6 +130,9 @@ def app():
 
     st.dataframe(data=df_optimized_roster_stats.round(2))
 
+    st.markdown('And here are the lineups detailed, and what type of player it\n'
+                'composes it.')
+
     df_optimized_lineup_stats = pd.read_sql_query('select O.LineupName, O."Lineup Players", O.Min, O.PTS, O.FGM, O.FGA,'
                                                   ' O.FG_PCT, O.FG3M, O.FG3A, O.FG3_PCT, O.FTM, O.FTA, O.FT_PCT, O.REB,'
                                                   ' O.AST, O.TOV, O.STL, O.BLK, O.PF from "Optimized_lineups"'
@@ -140,4 +142,12 @@ def app():
 
     st.dataframe(data=df_optimized_lineup_stats.round(2))
 
+    lineup = df_optimized_lineup_stats['Lineup Players']
+    minutes = df_optimized_lineup_stats['Min']
 
+    st.markdown('You can fin a quick summary of the optimized lineup below.\n')
+    i = 0
+    while i < len(lineup):
+        st.markdown('The lineup ' + str(i+1) + ' is composed of :\n'
+                    '**' + str(lineup[i]) + '** and they play ' + str(minutes[i]) + ' minutes together.\n')
+        i += 1
