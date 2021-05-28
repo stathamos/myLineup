@@ -65,7 +65,8 @@ Here's a recap:
 ### Find the right number of clusters
 
 In order to find the right number of clusters, we used the elbow method on the PCA dataset. This gave us the following graph:
-! [nbclus] (/ readme / nbclus.png)
+
+![nbclus](/readme/nbclus.png)
 
 The elbow is at the level of 7. So we chose 7 clusters. Here's how we named them:
 - Complete big
