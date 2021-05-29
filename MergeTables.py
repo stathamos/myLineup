@@ -4,6 +4,8 @@ import Toolbox as tool
 
 
 def merge_tables():
+    """Function that create a SQL query allowing us to join every tables for each players in order to have
+    one line per player-season-year."""
     update_col_name = ['ALTER TABLE Players2ptsDefense RENAME COLUMN Players2ptsDefense_CLOSE_DEF_PERSON_ID to '
                        'Players2ptsDefense_CLOSE_DEF_PLAYER_ID;',
                        'ALTER TABLE Players3ptsDefense RENAME COLUMN '

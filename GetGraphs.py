@@ -10,6 +10,7 @@ import numpy as np
 
 
 def scatter_3d(filename, size_pop, size_centroid, opac):
+    """Plot players on PCA 3D Axis"""
     if filename == 'Dataset_Players':
         query = pd.read_sql_query('SELECT * FROM PCA_' + filename, Database.conn)
         df = pd.DataFrame(query)
@@ -57,6 +58,7 @@ def scatter_3d(filename, size_pop, size_centroid, opac):
 
 
 def plot_histo(filename, type, nb_of_components):
+    """Plot PCA explained variance by the number of components"""
     ks = range(1, nb_of_components)
     inertias = []
     if type == 'exp_var':

@@ -3,6 +3,10 @@ import app2
 import app3
 import app4
 import streamlit as st
+
+
+# Main file of the streamlit application.
+
 PAGES = {
     "Introduction": app1,
     "Clustering NBA Players": app2,

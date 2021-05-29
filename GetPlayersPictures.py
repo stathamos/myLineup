@@ -4,6 +4,7 @@ import Toolbox as tool
 
 
 def get_htlm(url):
+    """Steal player's pictures on NBA.com"""
     soup = bs(requests.get(url).content, "html.parser")
     return str(soup)
 

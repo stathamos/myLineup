@@ -7,16 +7,12 @@ from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import plotly
 import hdbscan
-import sqlite3
-
-
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
-c = conn.cursor()
-conn.commit()
+import Database
 
 
 def plot_clusters(algo_name, algorithm, args, kwds):
-    df = pd.read_sql_query('Select * FROM PCA_Dataset_Players', conn)
+    """Function that plot the cluster on PCA Axes based on the algorithms used"""
+    df = pd.read_sql_query('Select * FROM PCA_Dataset_Players', Database.conn)
     labels = algorithm(*args, **kwds).fit_predict(df.iloc[:, 3:6])
     palette = sns.color_palette('deep', np.unique(labels).max() + 1)
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
@@ -26,23 +22,28 @@ def plot_clusters(algo_name, algorithm, args, kwds):
 
 
 def get_numeric_data(filename):
-      df=pd.read_csv('../DB 100h Proj/'+filename+'.csv', sep=';') #read csv file
-      df=df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
-      columns = df.columns.to_list()
-      df.drop(columns=columns[:columns.index('PlayersBios_GP')], inplace=True)
-      return df
+    """Select only numeric data from the complete dataset"""
+    df = pd.read_csv('../DB 100h Proj/'+filename+'.csv', sep=';')  # read csv file
+    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') &
+                (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there
+    # are not enough games played
+    columns = df.columns.to_list()
+    df.drop(columns=columns[:columns.index('PlayersBios_GP')], inplace=True)
+    return df
 
 
 def get_non_numeric_data(filename):
-      df=pd.read_csv('../DB 100h Proj/'+filename+'.csv', sep=';') #read csv file
-      df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
-      columns = df.columns.to_list()
-      df.drop(columns=columns[columns.index('PlayersBios_GP'):], inplace=True)
-      df.reset_index(inplace=True)
-      return df
+    """Select non numeric variables from the complete dataset. It has basically the small bio of every player"""
+    df = pd.read_csv('../DB 100h Proj/'+filename+'.csv', sep=';')
+    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]
+    columns = df.columns.to_list()
+    df.drop(columns=columns[columns.index('PlayersBios_GP'):], inplace=True)
+    df.reset_index(inplace=True)
+    return df
 
 
 def get_duplicate_columns(df):
+    """Return duplicated columns in the dataframe"""
     duplicateColumnNames = set()
     for x in range(df.shape[1]): # Iterate over all the columns in dataframe
         col = df.iloc[:, x] # Select column at xth index.
@@ -63,11 +64,13 @@ def clean_dataset(df):
 
 
 def delete_columns_with_missing_values(df, missing_rate):
-    df.dropna(axis=1,thresh=len(df)*missing_rate, inplace=True)
+    """Delete the columns that have a missing rate as indicated in the parameter"""
+    df.dropna(axis=1, thresh=len(df)*missing_rate, inplace=True)
     return df
 
 
 def get_pca(df, nb_of_components):
+    """Get the PCA Dataframe with normalized data"""
     X_std = StandardScaler().fit_transform(df)
     pca = PCA(n_components=nb_of_components)
     principalComponents = pca.fit_transform(X_std)
@@ -92,12 +95,12 @@ PCA_components = get_pca(df_numeric, 30)'''
 
 # plot_clusters('Kmeans', cluster.KMeans, (), {'n_clusters':7})
 
-plot_clusters('Affinity propagation', cluster.AffinityPropagation, (), {'damping': 0.95})
+# plot_clusters('Affinity propagation', cluster.AffinityPropagation, (), {'damping': 0.95})
 
-plot_clusters('MeanShift', cluster.MeanShift, (6,), {'cluster_all': True})
+# plot_clusters('MeanShift', cluster.MeanShift, (6,), {'cluster_all': True})
 
 # plotly.offline.plot(plot_clusters(PCA_components.to_numpy(), cluster.SpectralClustering, (), {'n_clusters':7}), filename='../Graphs/test_SpectralClustering.html')
 
-plot_clusters('AgglomerativeClustering', cluster.AgglomerativeClustering, (), {'n_clusters':7, 'linkage':'average'})
+# plot_clusters('AgglomerativeClustering', cluster.AgglomerativeClustering, (), {'n_clusters':7, 'linkage':'average'})
 
-plot_clusters('HDBSCAN', hdbscan.HDBSCAN, (), {'min_cluster_size':15})
+# plot_clusters('HDBSCAN', hdbscan.HDBSCAN, (), {'min_cluster_size':15})

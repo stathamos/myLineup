@@ -4,15 +4,13 @@ import sqlite3
 
 
 def app():
+    """Introduction of the app and showing the different tables we get."""
     def get_table(table_name):
         df = pd.read_sql_query('SELECT * FROM ' + table_name, conn)
         return df
 
     conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
-    c = conn.cursor()
     conn.commit()
-
-    logo = open(file='../Logo.png')
 
     st.image('../Logo.png')
     st.subheader('Optimizing NBA Lineups using unsupervised machine learning')

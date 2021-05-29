@@ -7,7 +7,7 @@ import PCA_LDA
 import TableQuery as q
 
 
-"""f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
+f.get_players_data('https://stats.nba.com/stats/leaguedashplayerbiostats', '')  # OK 1
 f.get_players_data('https://stats.nba.com/stats/leaguedashplayerstats', '')  # OK 2
 f.get_players_data('https://stats.nba.com/stats/leagueplayerondetails', '')  # OK 3
 # f.get_players_data('https://stats.nba.com/stats/playerestimatedmetrics', '')  # OK 4
@@ -85,4 +85,4 @@ o.get_type_description()
 
 f.get_team_corres()
 
-q.get_queries()"""
+q.get_queries()

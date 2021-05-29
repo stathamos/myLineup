@@ -5,12 +5,7 @@ import sqlite3
 
 
 def app():
-
-    def sort_list(li):
-        if li[1] == 'Other players':
-            li[1] = li[0]
-            li[0] = 'Other players'
-        return li
+    """Showing the players on PCA Axis, and explaining to what are linked the PCA variables"""
 
     conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
     conn.commit()

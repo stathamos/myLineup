@@ -5,11 +5,13 @@ import Database
 
 
 def converttuple(tup):
+    """Convert tuple into list"""
     s = ''.join(tup)
     return s
 
 
 def sql_column_to_list(ty):
+    """Convert SQL column into list"""
     li = Database.c.execute('select tbl_name from sqlite_master where type = "table" and name like "' + ty +
                             '%"').fetchall()
     j = 0
@@ -20,6 +22,7 @@ def sql_column_to_list(ty):
 
 
 def listtostring(s):
+    """Convert list into string"""
     s.sort()
     str1 = ""
     for ele in s:
@@ -28,6 +31,7 @@ def listtostring(s):
 
 
 def sql_query_to_list(query):
+    """Convert SQL Query into list"""
     Database.conn.row_factory = Database.sqlite3.Row
     list_of_tuple = Database.c.execute(query).fetchall()
     li = []
@@ -37,6 +41,7 @@ def sql_query_to_list(query):
 
 
 def count_element_list(li):
+    """Count element in list"""
     li2 = []
     for i in li:
         if li.count(i) > 1:
@@ -52,6 +57,7 @@ def count_element_list(li):
 
 
 def combinliste(seq, k):
+    """Find possible combination in list"""
     p = []
     i, imax = 0, 2 ** len(seq) - 1
     while i <= imax:
@@ -68,6 +74,7 @@ def combinliste(seq, k):
 
 
 def get_distinct_list(li):
+    """Get distinct element from list"""
     for j in range(0, len(li)):
         li[j].sort()
     li_f = list()
@@ -81,6 +88,7 @@ def get_distinct_list(li):
 
 
 def weighted_average(df, data_col, weight_col, by_col):
+    """Compute the weighted average of a column"""
     df['_data_times_weight'] = df[data_col] * df[weight_col]
     df['_weight_where_notnull'] = df[weight_col] * pd.notnull(df[data_col])
     g = df.groupby(by_col)

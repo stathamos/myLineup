@@ -6,7 +6,7 @@ import random
 
 
 def app():
-
+    """Player selection : choose player or type of player, and see the characteristics he has."""
     def sort_list(li):
         if li[1] == 'Other players':
             li[1] = li[0]

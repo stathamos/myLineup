@@ -10,6 +10,7 @@ import plotly
 
 
 def get_pca(filename, nb_of_components):
+    """Get the PCA Dataframe with normalized data based on type of data selected (Player/Team/Lineup)"""
     if filename == 'Dataset_Players':
         query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
         name = pd.read_sql_query('SELECT PlayersBios_PLAYER_NAME, PlayersBios_PLAYER_ID, '
@@ -109,6 +110,7 @@ def get_pca(filename, nb_of_components):
 
 
 def get_lda():
+    """Get the LDA Dataframe with normalized lineup data"""
     query = pd.read_sql_query('SELECT * FROM Numeric_Dataset_Lineups', Database.conn)
     name = pd.read_sql_query('SELECT LineupsTraditionalStats_GROUP_NAME, '
                              'LineupsTraditionalStats_GROUP_ID, LineupsTraditionalStats_Season FROM '

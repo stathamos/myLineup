@@ -5,6 +5,7 @@ import sqlite3
 
 
 def app():
+    """Give the ability to the user to select a team, and see the optimized lineups and the players it composes it."""
     conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v6.db')  # Connection / Creation of the DataBase
     conn.commit()
 

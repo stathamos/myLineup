@@ -4,7 +4,7 @@
 
 In order to realize this application I decided to use the following architecture on AWS:
 - EC2 instance
-- Route53
+- Route53 
 - SQLite3
 
 Here is a diagram explaining the links between the different tools used for the application.

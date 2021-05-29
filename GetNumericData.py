@@ -8,6 +8,7 @@ pd.options.display.max_colwidth = 100
 
 
 def get_numeric_data(filename):
+    """Return only numeric dataframe. Will be used for creating cluster in it"""
     if filename == 'Dataset_Players':
         query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
@@ -36,6 +37,7 @@ def get_numeric_data(filename):
 
 
 def get_non_numeric_data(filename):
+    """Get bio / information of every player. Won't be used for clustering players"""
     if filename == 'Dataset_Players':
         query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
         df = pd.DataFrame(query)
@@ -64,6 +66,7 @@ def get_non_numeric_data(filename):
 
 
 def clean_numeric_dataset(filename, missing_rate):
+    """Remove duplicated columns and column with high missing rate. Return a dataframe."""
     query = pd.read_sql_query('SELECT * FROM Numeric_' + filename, Database.conn)
     df = pd.DataFrame(query)
     duplicateColumnNames = []
@@ -83,6 +86,7 @@ def clean_numeric_dataset(filename, missing_rate):
 
 
 def get_players_type(player_id, season):
+    """Associate each player with a cluster"""
     Database.conn.row_factory = lambda cursor, row: row[0]
     ty = Database.c.execute(
         'SELECT Type FROM PCA_Dataset_Players WHERE PlayersBios_Player_ID = "' + player_id +
@@ -91,13 +95,14 @@ def get_players_type(player_id, season):
 
 
 def get_simple_player_type():
+    """Associate each player with a simple type."""
     df = pd.read_csv('../DB 100h Proj/PlayersType_simple.csv', sep=";")
     df.to_sql('Players_type_simple', Database.conn, if_exists='replace', index=False)
     return df
 
 
-
 def get_lda_bests_lineups():
+    """Count every type of lineup based on the type of player it composes it."""
     df_simple = get_simple_player_type()
     df = pd.read_sql_query('SELECT * FROM LDA_Dataset_Lineups WHERE Class in ("Elite", "High average")', Database.conn)
     players_type = Database.c.execute('SELECT DISTINCT Cluster FROM PCA_Dataset_Players ORDER BY Type').fetchall()

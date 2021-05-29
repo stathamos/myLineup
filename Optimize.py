@@ -4,6 +4,7 @@ import Toolbox as tool
 
 
 def get_players_with_type():
+    """Get players with type"""
     df = pd.read_sql_query('SELECT P.PlayersBios_PLAYER_NAME, P.PlayersBios_PLAYER_ID, P.PlayersBios_Season, P.Type, '
                            'CAST(NP.PlayersBios_TEAM_ID as INT) as Team_ID FROM PCA_Dataset_Players P JOIN '
                            'NonNumeric_Dataset_Players NP on P.PlayersBios_PLAYER_ID = NP.PlayersBios_PLAYER_ID WHERE '
@@ -12,6 +13,7 @@ def get_players_with_type():
 
 
 def get_type_description():
+    """Get description of each player's type"""
     df = pd.read_sql_query('SELECT P.PlayersBios_PLAYER_NAME, P.PlayersBios_PLAYER_ID, P.PlayersBios_Season, P.Type, '
                            'CAST(NP.PlayersBios_TEAM_ID as INT) as Team_ID FROM PCA_Dataset_Players P JOIN '
                            'NonNumeric_Dataset_Players NP on P.PlayersBios_PLAYER_ID = NP.PlayersBios_PLAYER_ID WHERE '
@@ -26,6 +28,7 @@ def get_type_description():
 
 
 def get_teams_lineups():
+    """List all lineups possible for each team"""
     team_list = tool.sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
                                        'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType ='
                                        ' "Regular Season"')
@@ -58,6 +61,7 @@ def get_teams_lineups():
 
 
 def get_players_boxscore(boxscore):
+    """Get boxscore for every player in optimized lineups"""
     boxscore.fillna(value=pd.np.nan, inplace=True)
     col = list(boxscore.columns.values)
     sum_col = col[1:6] + col[7:9] + col[10:12] + col[13:23] + col[34:43] + col[57:59] + col[60:62] + col[63:65] \
@@ -91,6 +95,7 @@ def get_players_boxscore(boxscore):
 
 
 def optimized_stats_team(data_to_insert):
+    """Compare optimized lineup with real team statistics"""
     col = list(data_to_insert.columns.values)
     serie_to_pivot = pd.Series([data_to_insert.iloc[0][0], 'Lineup'], index=col[:2])
     sum_col = col[3:7] + col[8:10] + col[11:13] + col[14:24] + col[35:44] + col[58:60] + col[61:63] + col[64:66] + col[67:]
@@ -144,6 +149,7 @@ def optimized_stats_team(data_to_insert):
 
 
 def optimization_lineup():
+    """Optimize each team, one after one"""
     team_list = tool.sql_query_to_list('SELECT TeamsTraditionalStats_TEAM_ID FROM NonNumeric_Dataset_Teams where '
                                        'TeamsTraditionalStats_Season = "2020-21" and TeamsTraditionalStats_SeasonType ='
                                        ' "Regular Season"')
@@ -154,6 +160,7 @@ def optimization_lineup():
 
 
 def optimization_lineup_by_team(team_id):
+    """Find best lineups possible, based on the type of player the team have"""
     minutes = [12, 11, 10, 9, 6]
     bests_lineups = tool.sql_query_to_list('select "Lineup Type" from Bests_Lineups_count')
     for k in range(len(bests_lineups)):
@@ -229,6 +236,7 @@ def optimization_lineup_by_team(team_id):
 
 
 def add_lineup_players():
+    """Get type of player in every lineup"""
     lineup_players = pd.read_sql_query('select O.*, B."Lineup Players" from Bests_Lineups_count B '
                                        'JOIN Team_Lineups T on T.LineupType = B."Lineup Type" '
                                        'JOIN Optimized_lineups O on O.Lineup = T.LineupID', Database.conn)

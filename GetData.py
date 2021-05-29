@@ -6,6 +6,7 @@ import Toolbox as tool
 
 
 def create_index(playerorteam, Type, TableName):
+    """Create SQL index every time data are inserted in a new table"""
     if playerorteam == 'Player' and Type == 'Offense':
         Database.c.execute(
             'CREATE INDEX "Index_' + TableName + '" ON "' + TableName + '" ("PLAYER_ID"	ASC, "Season" ASC, '
@@ -25,6 +26,7 @@ def create_index(playerorteam, Type, TableName):
 
 
 def get_players_data(url, typestat):
+    """Get the players data from the 7 lasts years"""
     i = 1  # Initiating the iterator to know how many lines left to import
 
     # Lists parameters needed for each request
@@ -878,6 +880,7 @@ def get_players_data(url, typestat):
 
 
 def get_teams_data(url, typestat):
+    """Get the teams data from the 7 lasts years"""
 
     i = 1  # Initiating the iterator to know how many lines left to import
 
@@ -1672,6 +1675,7 @@ def get_teams_data(url, typestat):
 
 
 def get_lineups_data(url):
+    """Get the lineups data from the 7 lasts years"""
     i = 1
 
     MeasureType = ['Base', 'Four Factors', 'Scoring', 'Advanced', 'Misc', 'Opponent']
@@ -1765,6 +1769,7 @@ def get_lineups_data(url):
 
 
 def clean_dataset(dataset):
+    """Remove useless column / duplicated named columns"""
 
     if dataset == 'Players':
 
@@ -1867,5 +1872,6 @@ def clean_dataset(dataset):
 
 
 def get_team_corres():
+    """Get the team correspondence"""
     df = pd.read_csv('../DB 100h Proj/Team_Corres.csv', sep=';')
     df.to_sql('Team_Correspondence', Database.conn, if_exists='replace', index=False)

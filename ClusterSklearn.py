@@ -1,20 +1,16 @@
 import pandas as pd
 import numpy as np
-import sqlite3
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import plotly
-
-
-conn = sqlite3.connect('../DB 100h Proj/DB_NBA_v4.1.db')  # Connection / Creation of the DataBase
-c = conn.cursor()
-conn.commit()
+import Database
 
 
 def get_numeric_data(filename):
-    query = pd.read_sql_query('SELECT * FROM '+ filename, conn)
+    """Select only numeric data from the complete dataset"""
+    query = pd.read_sql_query('SELECT * FROM ' + filename, Database.conn)
     df = pd.DataFrame(query)
     df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]
     columns = df.columns.to_list()
@@ -23,8 +19,9 @@ def get_numeric_data(filename):
 
 
 def get_non_numeric_data(filename):
+    """Select non numeric variables from the complete dataset. It has basically the small bio of every player"""
     df = pd.read_csv('../DB 100h Proj/' + filename + '.csv', sep=';')  # read csv file
-    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]  # Excluding playoff games and current season because there are not enough games played
+    df = df.loc[(df['PlayersBios_SeasonType'] == 'Regular Season') & (df['PlayersBios_Season'] != '2020-21')]
     columns = df.columns.to_list()
     df.drop(columns=columns[columns.index('PlayersBios_GP'):], inplace=True)
     df.reset_index(inplace=True)
@@ -32,6 +29,7 @@ def get_non_numeric_data(filename):
 
 
 def get_duplicate_columns(df):
+    """Return duplicated columns in the dataframe"""
     duplicateColumnNames = set()
     for x in range(df.shape[1]):  # Iterate over all the columns in dataframe
         col = df.iloc[:, x]  # Select column at xth index.
@@ -52,11 +50,13 @@ def clean_dataset(df):
 
 
 def delete_columns_with_missing_values(df, missing_rate):
+    """Delete the columns that have a missing rate as indicated in the parameter"""
     df.dropna(axis=1, thresh=len(df) * missing_rate, inplace=True)
     return df
 
 
 def plot_histo(type, df, nb_of_components):
+    """Plot PCA explained variance by the number of components"""
     ks = range(1, nb_of_components)
     inertias = []
     if type == 'exp_var':
@@ -86,6 +86,7 @@ def plot_histo(type, df, nb_of_components):
 
 
 def get_pca(df, nb_of_components):
+    """Get the PCA Dataframe with normalized data"""
     X_std = StandardScaler().fit_transform(df)
     pca = PCA(n_components=nb_of_components)
     principalComponents = pca.fit_transform(X_std)
@@ -94,6 +95,7 @@ def get_pca(df, nb_of_components):
 
 
 def get_cluster_labels(nb_clus):
+    """Associate each player with a cluster"""
     model = KMeans(n_clusters=nb_clus)  # Selecting the number of clusters
     model.fit(PCA_components.iloc[:, :3])  # Fit the PCA Component in order to plot them
     labels = model.predict(PCA_components.iloc[:, :3])
@@ -101,6 +103,7 @@ def get_cluster_labels(nb_clus):
 
 
 def get_pca_with_cluster():
+    """Add player name to PCA dataframe"""
     PCA_components.drop(columns=list(PCA_components.columns)[3:], inplace=True)
     PCA_components['Cluster'] = labels
     PCA_components['Name'] = df_non_numeric['PlayersBios_PLAYER_NAME']
@@ -108,6 +111,7 @@ def get_pca_with_cluster():
 
 
 def get_centroids(nb_clus):
+    """Get centroid of each cluster"""
     model = KMeans(n_clusters=nb_clus)  # Selecting the number of clusters
     model.fit(PCA_components.iloc[:, :3])  # Fit the PCA Component in order to plot them
     centroids = model.cluster_centers_
@@ -115,6 +119,7 @@ def get_centroids(nb_clus):
 
 
 def get_centroids_df(nb_clus):
+    """Put centroids in dataframe for each cluster"""
     centroids_df = pd.DataFrame.from_records(centroids)
     centroids_df['Cluster'] = nb_clus
     centroids_df['Name'] = None
@@ -124,12 +129,14 @@ def get_centroids_df(nb_clus):
 
 
 def get_pca_components_with_centroids():
+    """Return PCA dataframe merged with centroids"""
     PCA_components_with_centroids = pd.concat([PCA_components, centroids_df])
     PCA_components_with_centroids.rename(columns={0: 'PCA1', 1: 'PCA2', 2: 'PCA3'}, inplace=True)
     return PCA_components_with_centroids
 
 
 def get_pca_components_with_distances():
+    """Compute the distance between each player and their centroid"""
     for i in range(len(centroids_df)):
         centroids_df['Cluster'][i] = i
     PCA_components_with_distances = pd.merge(PCA_components_with_centroids, centroids_df, how='inner', on='Cluster')
